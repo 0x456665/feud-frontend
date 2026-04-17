@@ -10,7 +10,7 @@
     --font-heading: 'Lexend', sans-serif;
     --font-sans: 'Plus Jakarta Sans', sans-serif;
     --color-sidebar-ring: var(--sidebar-ring);
-    --color-sidebar-border: transparent;
+    --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
     --color-sidebar-accent: var(--sidebar-accent);
     --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
@@ -24,7 +24,7 @@
     --color-chart-1: var(--chart-1);
     --color-ring: var(--ring);
     --color-input: var(--input);
-    --color-border: transparent;
+    --color-border: var(--border);
     --color-destructive: var(--destructive);
     --color-accent-foreground: var(--accent-foreground);
     --color-accent: var(--accent);
@@ -51,22 +51,23 @@
 
 :root {
     /* The Electric Stage Theme */
-    --background: #fef3ff;
-    --foreground: #3a264b;
-    --card: #f5e2ff;
-    --card-foreground: #3a264b;
-    --popover: #f5e2ff;
-    --popover-foreground: #3a264b;
+    color-scheme: light;
+    --background: #fff8fc;
+    --foreground: #2f1f3d;
+    --card: #ffffff;
+    --card-foreground: #2f1f3d;
+    --popover: #ffffff;
+    --popover-foreground: #2f1f3d;
     --primary: #702ae1;
     --primary-foreground: #ffffff;
     --secondary: #fed01b;
-    --secondary-foreground: #3a264b;
-    --muted: #edd3ff;
-    --muted-foreground: #702ae1;
+    --secondary-foreground: #342045;
+    --muted: #f2e6fb;
+    --muted-foreground: #65487f;
     --accent: #ff9742;
     --accent-foreground: #ffffff;
     --destructive: #b41340;
-    --border: #bda3d1; /* For ghost borders */
+    --border: #c9afd9;
     --input: #ffffff;
     --ring: #702ae1;
     --chart-1: #702ae1;
@@ -75,18 +76,19 @@
     --chart-4: #b28cff;
     --chart-5: #edd3ff;
     --radius: 1.5rem; /* xl roundedness */
-    --sidebar: #f5e2ff;
-    --sidebar-foreground: #3a264b;
+    --sidebar: #f7ebff;
+    --sidebar-foreground: #2f1f3d;
     --sidebar-primary: #702ae1;
     --sidebar-primary-foreground: #ffffff;
-    --sidebar-accent: #edd3ff;
-    --sidebar-accent-foreground: #3a264b;
-    --sidebar-border: transparent;
+    --sidebar-accent: #efe0fb;
+    --sidebar-accent-foreground: #2f1f3d;
+    --sidebar-border: #d6c0e5;
     --sidebar-ring: #702ae1;
 }
 
 .dark {
     /* Same deep purple baseline for dark */
+    color-scheme: dark;
     --background: #1d0f2b;
     --foreground: #fef3ff;
     --card: #2d1842;
@@ -122,7 +124,7 @@ h1, h2, h3, h4, h5, h6, .display-font {
 }
 
 .glass-panel {
-    background-color: rgba(237, 211, 255, 0.8);
+    background-color: rgba(255, 255, 255, 0.82);
     backdrop-filter: blur(24px);
 }
 
@@ -145,12 +147,12 @@ h1, h2, h3, h4, h5, h6, .display-font {
     background:
         radial-gradient(circle at top left, rgba(254, 208, 27, 0.28), transparent 35%),
         radial-gradient(circle at bottom right, rgba(112, 42, 225, 0.2), transparent 40%),
-        rgba(245, 226, 255, 0.9);
+        rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(18px);
 }
 
 .marquee-frame {
-    border: 1px solid rgba(112, 42, 225, 0.12);
+    border: 1px solid rgba(112, 42, 225, 0.2);
     box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.65),
         0 24px 50px rgba(58, 38, 75, 0.12);
@@ -164,7 +166,7 @@ h1, h2, h3, h4, h5, h6, .display-font {
 }
 
 .ticker-pill {
-    border: 1px solid rgba(112, 42, 225, 0.12);
-    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(112, 42, 225, 0.18);
+    background: rgba(255, 255, 255, 0.72);
     backdrop-filter: blur(10px);
 }

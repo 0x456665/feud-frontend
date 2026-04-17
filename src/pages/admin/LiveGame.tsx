@@ -196,7 +196,7 @@ export default function LiveGame() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-56px)] bg-background">
+    <div className="flex min-h-[calc(100vh-56px)] overflow-x-hidden bg-background">
       <AdminSidebar
         gameCode={gameCode}
         active="live"
@@ -232,7 +232,7 @@ export default function LiveGame() {
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top bar */}
-        <div className="flex items-center gap-4 border-b border-border/30 bg-background/90 px-6 py-3 backdrop-blur-sm">
+        <div className="flex flex-wrap items-center gap-3 border-b border-border/30 bg-background/90 px-4 py-3 backdrop-blur-sm sm:px-6">
           <div className="text-sm font-bold text-foreground/90">
             {currentQuestion ? `Round ${currentQuestion.roundNumber}` : 'No Round Active'}
           </div>
@@ -256,17 +256,17 @@ export default function LiveGame() {
           </div>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-hidden xl:flex-row">
           {/* Left: Question board */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
             <div className="mb-5">
               {currentQuestion ? (
                 <>
-                  <div className="mb-2 flex items-center gap-3">
+                  <div className="mb-2 flex flex-wrap items-center gap-3">
                     <span className="rounded-full bg-accent/20 px-3 py-1 text-[10px] font-black tracking-widest text-accent uppercase">
                       Active Question
                     </span>
-                    <span className="ml-auto text-sm font-black text-foreground">
+                    <span className="text-sm font-black text-foreground sm:ml-auto">
                       Total Points On Board{' '}
                       <span className="text-xl text-primary">
                         {revealedTiles.reduce((s, t) => s + t.points, 0)}
@@ -289,7 +289,7 @@ export default function LiveGame() {
             </div>
 
             {tiles.length > 0 && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {tiles.map(({ rank, revealed }) => {
                   const unrevOption = currentQuestionDetails?.options.find(
                     (o) => o.rank === rank && !revealedOptionIds.has(o.id),
@@ -357,7 +357,7 @@ export default function LiveGame() {
           </div>
 
           {/* Right: Controls */}
-          <div className="w-64 shrink-0 overflow-y-auto border-l border-border/30 p-4 space-y-4">
+          <div className="w-full shrink-0 overflow-y-auto border-t border-border/30 p-4 space-y-4 xl:w-64 xl:border-t-0 xl:border-l">
             {/* Team Scores */}
             <div className="rounded-[2rem] bg-card p-4 shadow-glow">
               <p className="mb-3 text-[10px] font-black tracking-widest text-foreground uppercase">

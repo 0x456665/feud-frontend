@@ -217,11 +217,11 @@ export default function CreateGame() {
             </section>
 
             {/* ── GOAL / ROUNDS ── */}
-            <section className="mb-6 flex items-start gap-4">
+            <section className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start">
               <div className="flex-1">
                 {/* spacer to align with goal widget */}
               </div>
-              <div className="w-44 rounded-3xl bg-secondary p-4 text-center shadow-glow">
+              <div className="w-full rounded-3xl bg-secondary p-4 text-center shadow-glow sm:w-44">
                 <p className="mb-2 text-[10px] font-black tracking-widest text-secondary-foreground/60 uppercase">
                   Goal
                 </p>
@@ -253,7 +253,7 @@ export default function CreateGame() {
             {/* ── TEAM NAMES ── */}
             <section className="mb-8">
               <h2 className="mb-3 text-base font-bold text-foreground">Team Names</h2>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {[
                   { id: 'teamA', label: 'TEAM 1', value: teamAName, setter: setTeamAName, placeholder: 'Type team name here...' },
                   { id: 'teamB', label: 'TEAM 2', value: teamBName, setter: setTeamBName, placeholder: 'Type team name here...' },
@@ -392,7 +392,7 @@ export default function CreateGame() {
                           </div>
 
                           {/* Footer row */}
-                          <div className="mt-4 flex items-center justify-between gap-2">
+                          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <div className="flex gap-2">
                               <Button
                                 type="button"
@@ -437,7 +437,7 @@ export default function CreateGame() {
                   Add Question
                 </Button>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {questions.map((q, i) => (
                   <div key={q.id} className="rounded-[2rem] bg-card p-5 text-sm shadow-glow">
                     <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase mb-1">

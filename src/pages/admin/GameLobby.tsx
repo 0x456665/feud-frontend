@@ -148,12 +148,12 @@ export default function GameLobby() {
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-[calc(100vh-56px)] bg-background">
+    <div className="flex min-h-[calc(100vh-56px)] overflow-x-hidden bg-background">
       <AdminSidebar gameCode={gameCode} active="survey" />
 
       <div className="stage-grid spotlight-wash relative flex-1 overflow-y-auto">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.45),transparent_40%)]" />
-        <div className="relative mx-auto max-w-5xl px-6 py-10">
+        <div className="relative mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
 
           <section className="mb-8 grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
             <div className="stage-panel marquee-frame rounded-[2rem] p-7">
@@ -192,8 +192,8 @@ export default function GameLobby() {
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
               <div className="rounded-[2rem] bg-card p-6 shadow-glow">
                 <p className="text-[10px] font-black uppercase tracking-[0.24em] text-foreground/90">Share This Code</p>
-                <div className="mt-4 flex items-center justify-between rounded-[1.6rem] bg-background px-4 py-4">
-                  <span className="text-3xl font-black tracking-[0.22em] text-foreground">{gameCode}</span>
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[1.6rem] bg-background px-4 py-4">
+                  <span className="break-all text-2xl font-black tracking-[0.14em] text-foreground sm:text-3xl sm:tracking-[0.22em]">{gameCode}</span>
                   <button
                     type="button"
                     onClick={copyCode}
@@ -325,7 +325,7 @@ export default function GameLobby() {
               </div>
               <div className="my-4 h-px bg-border/20" />
               <p className="text-[10px] text-foreground/90 uppercase tracking-widest mb-1">Game Code</p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xl font-black tracking-[0.2em] text-foreground">{gameCode}</span>
                 <button
                   type="button"
@@ -341,32 +341,32 @@ export default function GameLobby() {
               <p className="text-sm font-bold text-foreground mb-1">System Health</p>
               <p className="text-xs text-foreground/90 mb-4">Game is set up and ready.</p>
               <div className="space-y-2 text-xs text-foreground/90">
-                <div className="flex justify-between">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span>Game Name</span>
-                  <span className="font-medium text-foreground truncate max-w-30">{game.game_name}</span>
+                  <span className="max-w-full wrap-break-word font-medium text-foreground sm:max-w-30 sm:text-right">{game.game_name}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span>Rounds</span>
                   <span className="font-medium text-foreground">{game.num_rounds}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span>Play State</span>
                   <span className="font-medium text-foreground">{game.play_state}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span>Uptime</span>
                   <span className="font-medium text-foreground">99.9%</span>
                 </div>
               </div>
               <div className="my-3 h-px bg-border/20" />
-              <p className="text-[10px] text-foreground/90">
+              <p className="break-all text-[10px] text-foreground/90">
                 Admin code: <code className="font-mono text-primary font-bold">{adminCode}</code>
               </p>
             </div>
           </div>
 
           <section>
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-base font-bold text-foreground">Game Content Preview</h2>
                 <p className="text-xs text-foreground/90">Questions waiting backstage before they hit the board.</p>

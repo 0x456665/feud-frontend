@@ -23,14 +23,14 @@ function CopyRow({ label, url }: { label: string; url: string }) {
       <p className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-foreground/50">
         {label}
       </p>
-      <div className="flex min-w-0 items-center gap-2">
-        <span className="min-w-0 flex-1 truncate rounded-xl border border-border bg-background px-3 py-2 font-mono text-xs text-foreground">
+      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
+        <span className="min-w-0 flex-1 overflow-hidden break-all rounded-xl border border-border bg-background px-3 py-2 font-mono text-[11px] leading-5 text-foreground">
           {url}
         </span>
         <button
           type="button"
           onClick={copy}
-          className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-colors hover:bg-primary/80"
+          className="flex h-10 w-full shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-colors hover:bg-primary/80 sm:size-9 sm:w-auto"
         >
           {copied ? <CheckCheck className="size-4" /> : <Copy className="size-4" />}
         </button>
@@ -52,19 +52,19 @@ export default function GameCreated() {
     : null;
 
   return (
-    <div className="flex min-h-[calc(100vh-56px)] bg-background">
+    <div className="flex min-h-[calc(100vh-56px)] overflow-x-hidden bg-background">
       <AdminSidebar gameCode={gameCode} active="setup" />
 
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
           {/* Header */}
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25">
+            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25 sm:size-16">
               <span className="text-2xl">🎉</span>
             </div>
-            <h1 className="text-4xl font-black tracking-tight text-foreground">
+            <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl">
               Game{' '}
-              <span className="font-mono text-primary">{gameCode}</span>{' '}
+              <span className="break-all font-mono text-primary">{gameCode}</span>{' '}
               Created!
             </h1>
             <p className="mt-2 text-sm text-foreground/60">
@@ -78,8 +78,8 @@ export default function GameCreated() {
               <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-amber-800">
                 Your Admin Code — save this now!
               </p>
-              <div className="flex items-center gap-3">
-                <span className="min-w-0 flex-1 rounded-xl border border-amber-300 bg-white px-4 py-2.5 font-mono text-xl font-black tracking-widest text-gray-900">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <span className="min-w-0 flex-1 break-all rounded-xl border border-amber-300 bg-white px-4 py-2.5 text-center font-mono text-base font-black tracking-[0.18em] text-gray-900 sm:text-left sm:text-xl sm:tracking-widest">
                   {adminCode}
                 </span>
                 <button
@@ -88,7 +88,7 @@ export default function GameCreated() {
                     navigator.clipboard.writeText(adminCode);
                     toast.success('Admin code copied!');
                   }}
-                  className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white hover:bg-amber-600"
+                  className="flex h-10 w-full shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white hover:bg-amber-600 sm:size-10 sm:w-auto"
                 >
                   <Copy className="size-4" />
                 </button>
@@ -102,10 +102,10 @@ export default function GameCreated() {
           {/* Shareable admin link */}
           {adminAccessUrl && (
             <div className="mb-5 rounded-2xl border-2 border-primary/30 bg-primary/5 p-5">
-              <div className="mb-2 flex items-center gap-2">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
                 <ShieldCheck className="size-4 text-primary" />
                 <p className="text-sm font-black text-foreground">Admin Access Link</p>
-                <span className="ml-auto rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-primary-foreground">
+                <span className="rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold text-primary-foreground sm:ml-auto">
                   Keep private
                 </span>
               </div>
@@ -169,8 +169,8 @@ export default function GameCreated() {
             <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-foreground/50">
               Game Code
             </p>
-            <div className="flex items-center justify-center gap-3">
-              <span className="font-mono text-4xl font-black tracking-[0.2em] text-primary">
+            <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <span className="break-all text-center font-mono text-3xl font-black tracking-[0.14em] text-primary sm:text-4xl sm:tracking-[0.2em]">
                 {gameCode}
               </span>
               <button
@@ -179,7 +179,7 @@ export default function GameCreated() {
                   navigator.clipboard.writeText(gameCode);
                   toast.success('Game code copied!');
                 }}
-                className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary hover:bg-primary/20"
+                className="flex h-10 w-full items-center justify-center rounded-xl bg-primary/10 text-primary hover:bg-primary/20 sm:size-9 sm:w-auto"
               >
                 <Copy className="size-4" />
               </button>

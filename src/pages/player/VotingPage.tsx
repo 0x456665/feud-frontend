@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, AlertCircle, Trophy, Zap, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -8,6 +8,17 @@ import {
   useCastVoteMutation,
 } from '@/store/api/playerApi';
 import type { PublicQuestion } from '@/types';
+
+function shuffleArray<T>(items: T[]) {
+  const shuffled = [...items];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[randomIndex]] = [shuffled[randomIndex], shuffled[index]];
+  }
+
+  return shuffled;
+}
 
 export default function VotingPage() {
   const { gameCode = '' } = useParams<{ gameCode: string }>();
@@ -23,6 +34,16 @@ export default function VotingPage() {
   const [selections, setSelections] = useState<Record<string, Set<string>>>({});
   const [submitted, setSubmitted] = useState<Set<string>>(new Set());
   const [currentIdx, setCurrentIdx] = useState(0);
+  const shuffledQuestions = useMemo(
+    () =>
+      questionsData
+        ? shuffleArray(questionsData.questions).map((question) => ({
+            ...question,
+            options: shuffleArray(question.options),
+          }))
+        : [],
+    [questionsData],
+  );
 
   function toggleOption(questionId: string, optionId: string) {
     setSelections((prev) => {
@@ -148,7 +169,7 @@ export default function VotingPage() {
     );
   }
 
-  const questions = questionsData.questions;
+  const questions = shuffledQuestions;
   const readyQuestionIds = questions
     .filter(
       (question) =>
@@ -168,7 +189,8 @@ export default function VotingPage() {
     );
   }
 
-  const currentQuestion = questions[currentIdx];
+  const safeCurrentIdx = Math.min(currentIdx, questions.length - 1);
+  const currentQuestion = questions[safeCurrentIdx];
   const selected = selections[currentQuestion.questionId] ?? new Set<string>();
   const isSubmitted = submitted.has(currentQuestion.questionId);
   const allDone = questions.every((q) => submitted.has(q.questionId));
@@ -203,7 +225,7 @@ export default function VotingPage() {
           <div className="mb-4 flex items-start justify-between">
             <div>
               <p className="text-[10px] font-black tracking-widest text-muted-foreground uppercase mb-1">
-                Round {String(currentIdx + 1).padStart(2, '0')}
+                Round {String(safeCurrentIdx + 1).padStart(2, '0')}
               </p>
               <h2 className="text-2xl font-black tracking-tight text-foreground leading-tight">
                 {currentQuestion.question.length > 40
@@ -212,7 +234,7 @@ export default function VotingPage() {
               </h2>
             </div>
             <span className="ml-4 shrink-0 rounded-full bg-primary/15 px-3 py-1 text-xs font-bold text-primary">
-              {currentIdx + 1} / {questions.length}
+                {safeCurrentIdx + 1} / {questions.length}
             </span>
           </div>
 
@@ -255,7 +277,7 @@ export default function VotingPage() {
                 }}
                 className="rounded-3xl border border-border bg-background px-4 py-4 text-sm font-black uppercase tracking-wider text-foreground transition hover:border-primary/70"
               >
-                {currentIdx < questions.length - 1 ? 'Save & next' : 'Save'}
+                {safeCurrentIdx < questions.length - 1 ? 'Save & next' : 'Save'}
               </button>
               <button
                 type="button"
@@ -282,7 +304,7 @@ export default function VotingPage() {
                 type="button"
                 onClick={() => setCurrentIdx(i)}
                 className={`size-2 rounded-full transition-all ${
-                  i === currentIdx ? 'bg-primary w-4' : submitted.has(q.questionId) ? 'bg-primary/40' : 'bg-border/30'
+                  i === safeCurrentIdx ? 'bg-primary w-4' : submitted.has(q.questionId) ? 'bg-primary/40' : 'bg-border/30'
                 }`}
               />
             ))}

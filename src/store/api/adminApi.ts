@@ -12,6 +12,7 @@ import type {
   Team,
   EndGameResult,
   Question,
+  SurveyVoterCountResponse,
 } from '@/types';
 
 /**
@@ -69,6 +70,10 @@ export const adminApi = createApi({
     getSurveyStats: builder.query<SurveyQuestionStat[], string>({
       query: (gameCode) => `/admin/games/${gameCode}/survey-stats`,
       providesTags: (_result, _error, gameCode) => [{ type: 'SurveyStats', id: gameCode }],
+    }),
+
+    getSurveyVoterCount: builder.query<SurveyVoterCountResponse, string>({
+      query: (gameCode) => `/admin/games/${gameCode}/survey-voters`,
     }),
 
     // ── PATCH /admin/games/:gameCode/voting ────────────────────────────────
@@ -187,6 +192,7 @@ export const {
   useGetGameQuery,
   useLazyGetGameQuery,
   useGetSurveyStatsQuery,
+  useGetSurveyVoterCountQuery,
   useSetVotingStateMutation,
   useStartGameMutation,
   useNextQuestionMutation,

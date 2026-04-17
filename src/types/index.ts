@@ -117,6 +117,10 @@ export interface SurveyQuestionStat {
   options: SurveyOptionStat[];
 }
 
+export interface SurveyVoterCountResponse {
+  totalVoters: number;
+}
+
 // ─────────────────────────────────────────────
 // API Request / Response Shapes
 // ─────────────────────────────────────────────
@@ -154,7 +158,7 @@ export interface PlayerCountResponse {
 export interface VoteSubmission {
   gameId: string;
   questionId: string;
-  optionIds: string[]; // 4–6 UUIDs
+  optionIds: string[]; // 0-3 UUIDs
 }
 
 export interface CastVotePayload {

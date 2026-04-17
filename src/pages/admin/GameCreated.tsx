@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { QRCodeSVG } from 'qrcode.react';
 import { Copy, CheckCheck, ArrowRight, Users, BarChart3, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
@@ -56,18 +55,18 @@ export default function GameCreated() {
       <AdminSidebar gameCode={gameCode} active="setup" />
 
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
           {/* Header */}
           <div className="mb-8 text-center">
-            <div className="mx-auto mb-4 flex size-14 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25 sm:size-16">
+            <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25 sm:size-14">
               <span className="text-2xl">🎉</span>
             </div>
-            <h1 className="text-3xl font-black tracking-tight text-foreground sm:text-4xl">
+            <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-4xl">
               Game{' '}
               <span className="break-all font-mono text-primary">{gameCode}</span>{' '}
               Created!
             </h1>
-            <p className="mt-2 text-sm text-foreground/60">
+            <p className="mt-2 text-sm text-soft">
               Share these links with your players to get started.
             </p>
           </div>
@@ -112,34 +111,25 @@ export default function GameCreated() {
               <p className="mb-4 text-xs font-medium text-foreground/70">
                 Share with a co-host to give them full admin control. Anyone with this link can manage the game.
               </p>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-                <div className="mx-auto shrink-0 rounded-xl border-2 border-primary/20 bg-white p-2.5">
-                  <QRCodeSVG value={adminAccessUrl} size={96} />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <CopyRow label="Admin Link" url={adminAccessUrl} />
-                  <p className="mt-2 text-[11px] font-medium text-foreground/50">
-                    The link encodes the admin code — treat it like a password.
-                  </p>
-                </div>
+              <div className="min-w-0">
+                <CopyRow label="Admin Link" url={adminAccessUrl} />
+                <p className="mt-2 text-[11px] font-medium text-foreground/50">
+                  The link encodes the admin code — treat it like a password.
+                </p>
               </div>
             </div>
           )}
 
-          {/* QR + links grid */}
           <div className="grid gap-4 sm:grid-cols-2">
             {/* Join link card */}
-            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <div className="theme-panel rounded-2xl p-5">
               <div className="mb-3 flex items-center gap-2">
                 <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
                   <Users className="size-4 text-primary" />
                 </div>
                 <p className="text-sm font-black text-foreground">Join Link</p>
               </div>
-              <div className="mb-4 flex justify-center rounded-xl border border-border bg-white p-3">
-                <QRCodeSVG value={joinUrl} size={150} />
-              </div>
-              <p className="mb-3 text-center text-xs font-medium text-foreground/70">
+              <p className="mb-3 text-sm font-medium text-soft">
                 Players scan to reach the join page — they enter code{' '}
                 <span className="font-mono font-black text-primary">{gameCode}</span>
               </p>
@@ -147,17 +137,14 @@ export default function GameCreated() {
             </div>
 
             {/* Vote link card */}
-            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <div className="theme-panel rounded-2xl p-5">
               <div className="mb-3 flex items-center gap-2">
                 <div className="flex size-7 items-center justify-center rounded-lg bg-primary/10">
                   <BarChart3 className="size-4 text-primary" />
                 </div>
                 <p className="text-sm font-black text-foreground">Voting Link</p>
               </div>
-              <div className="mb-4 flex justify-center rounded-xl border border-border bg-white p-3">
-                <QRCodeSVG value={voteUrl} size={150} />
-              </div>
-              <p className="mb-3 text-center text-xs font-medium text-foreground/70">
+              <p className="mb-3 text-sm font-medium text-soft">
                 Direct survey link — share once voting is open.
               </p>
               <CopyRow label="Vote URL" url={voteUrl} />
@@ -165,12 +152,12 @@ export default function GameCreated() {
           </div>
 
           {/* Game code pill */}
-          <div className="mt-4 rounded-2xl border border-border bg-card p-5 text-center shadow-sm">
+          <div className="theme-panel mt-4 rounded-2xl p-5 text-center">
             <p className="mb-2 text-[10px] font-black uppercase tracking-widest text-foreground/50">
               Game Code
             </p>
             <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <span className="break-all text-center font-mono text-3xl font-black tracking-[0.14em] text-primary sm:text-4xl sm:tracking-[0.2em]">
+              <span className="break-all text-center font-mono text-2xl font-black tracking-[0.14em] text-primary sm:text-4xl sm:tracking-[0.2em]">
                 {gameCode}
               </span>
               <button
@@ -190,7 +177,7 @@ export default function GameCreated() {
           <button
             type="button"
             onClick={() => navigate(`/admin/game/${gameCode}`)}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 text-sm font-black uppercase tracking-wider text-primary-foreground shadow-[0_4px_0_oklch(0.38_0.20_293)] transition-all hover:translate-y-px hover:shadow-[0_2px_0_oklch(0.38_0.20_293)] active:translate-y-0.75 active:shadow-none"
+            className="mt-6 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-3.5 text-sm font-black uppercase tracking-wider text-primary-foreground shadow-[0_4px_0_oklch(0.38_0.20_293)] transition-all hover:translate-y-px hover:shadow-[0_2px_0_oklch(0.38_0.20_293)] active:translate-y-0.75 active:shadow-none"
           >
             Go to Survey Dashboard
             <ArrowRight className="size-4" />

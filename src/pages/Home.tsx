@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Users, Zap, BookOpen, ChevronRight, Radio, Trophy, TimerReset } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Plus, Users, Zap, ChevronRight, Radio, Trophy, TimerReset, Sparkles, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
@@ -20,61 +19,61 @@ export default function Home() {
         <div className="pointer-events-none absolute -left-24 top-10 size-80 rounded-full bg-primary/20 blur-3xl" />
         <div className="pointer-events-none absolute -right-10 top-24 size-72 rounded-full bg-secondary/25 blur-3xl" />
 
-        <div className="relative mx-auto grid max-w-6xl gap-8 px-4 pb-16 pt-12 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:pb-20 lg:pt-18">
-          <div>
+        <div className="relative mx-auto grid max-w-6xl gap-8 px-4 pb-14 pt-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center lg:pb-20 lg:pt-18">
+          <div className="animate-enter-up">
             <div className="mb-5 flex flex-wrap gap-2">
               {heroBadges.map((badge) => (
-                <span key={badge} className="ticker-pill rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.22em] text-[#69537B]">
+                <span key={badge} className="ticker-pill badge-pill px-3 text-[11px] font-black uppercase tracking-[0.22em] text-[#69537B]">
                   {badge}
                 </span>
               ))}
             </div>
 
-            <h1 className="max-w-4xl text-5xl font-black leading-[1.02] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
+            <h1 className="max-w-4xl text-4xl font-black leading-[1.02] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
               Turn your next game night into a
               <span className="block text-primary">full-blown studio showdown.</span>
             </h1>
 
-            <p className="mt-6 max-w-xl text-base leading-7 text-foreground/90 sm:text-lg">
+            <p className="mt-5 max-w-xl text-sm leading-7 text-foreground/90 sm:text-lg">
               Build a survey, collect real answers, then run the reveal round live with
               a scoreboard, strikes, and a board designed to feel like a proper broadcast.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-5">
-              <div className="rounded-[2rem] bg-background/90 px-5 py-4 shadow-glow backdrop-blur-md border border-[#69537B]">
+            <div className="animate-enter-up-delay mt-7 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-[2rem] border border-[#69537B] bg-background/90 px-5 py-4 shadow-glow backdrop-blur-md">
                 <p className="text-[10px] font-black uppercase tracking-[0.28em] text-foreground/90">Host Flow</p>
-                <p className="mt-2 text-lg font-black text-foreground">Create, survey, go live.</p>
+                <p className="mt-2 text-base font-black text-foreground sm:text-lg">Create, survey, go live.</p>
               </div>
-              <div className="rounded-[2rem] bg-background/90 px-5 py-4 shadow-glow backdrop-blur-md border border-[#69537B]">
+              <div className="rounded-[2rem] border border-[#69537B] bg-background/90 px-5 py-4 shadow-glow backdrop-blur-md">
                 <p className="text-[10px] font-black uppercase tracking-[0.28em] text-foreground/90">Player Flow</p>
-                <p className="mt-2 text-lg font-black text-foreground">Join once, watch every reveal.</p>
+                <p className="mt-2 text-base font-black text-foreground sm:text-lg">Join once, watch every reveal.</p>
               </div>
             </div>
 
-            <div className="mt-10 flex flex-wrap items-center gap-5">
-            <BuzzerButton
-              to="/admin/create"
-              label="Create Game"
-              icon={<Plus className="size-8 stroke-[2.5]" />}
-              className="gradient-primary text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] hover:scale-105 active:scale-95"
-            />
-            <BuzzerButton
-              to="/join"
-              label="Join Game"
-              icon={<Users className="size-7 stroke-[2.5]" />}
-              className="bg-secondary text-secondary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] hover:scale-105 active:scale-95"
-            />
+            <div className="animate-enter-up-delay-2 mt-8 grid w-full max-w-xl grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:items-center sm:gap-5">
+              <BuzzerButton
+                to="/admin/create"
+                label="Create Game"
+                icon={<Plus className="size-7 stroke-[2.5] sm:size-8" />}
+                className="gradient-primary text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] hover:scale-[1.02] active:scale-[0.98]"
+              />
+              <BuzzerButton
+                to="/join"
+                label="Join Game"
+                icon={<Users className="size-6 stroke-[2.5] sm:size-7" />}
+                className="bg-secondary text-secondary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] hover:scale-[1.02] active:scale-[0.98]"
+              />
             </div>
           </div>
 
-          <div className="relative">
+          <div className="relative animate-enter-up-delay lg:justify-self-end">
             <div className="stage-panel marquee-frame rounded-[2.2rem] p-6 sm:p-7">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-[0.28em] text-primary/90">Tonight's Format</p>
-                  <p className="mt-1 text-2xl font-black tracking-tight text-foreground">Broadcast Mode</p>
+                  <p className="mt-1 text-2xl font-black tracking-tight text-primary">Broadcast Mode</p>
                 </div>
-                <div className="flex items-center gap-2 rounded-full bg-destructive px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-white">
+                <div className="badge-pill flex gap-2 bg-destructive px-3 text-[10px] font-black uppercase tracking-[0.22em] text-white">
                   <Radio className="size-3" />
                   On Air
                 </div>
@@ -82,7 +81,7 @@ export default function Home() {
 
               <div className="mt-6 space-y-3">
                 {showFlow.map(({ title, description, Icon }) => (
-                  <div key={title} className="flex items-start gap-3 rounded-[1.6rem] bg-background/90 px-4 py-4 shadow-sm backdrop-blur-sm">
+                  <div key={title} className="flex items-start gap-3 rounded-[1.6rem] bg-background/90 px-4 py-4 shadow-sm backdrop-blur-sm transition-transform duration-300 hover:-translate-y-1">
                     <div className="mt-0.5 flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary">
                       <Icon className="size-5" />
                     </div>
@@ -96,7 +95,7 @@ export default function Home() {
 
               <div className="mt-6 grid grid-cols-3 gap-3">
                 {heroStats.map((stat) => (
-                  <div key={stat.label} className="rounded-[1.4rem] bg-primary px-4 py-4 text-center text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]">
+                  <div key={stat.label} className="animate-float-slow rounded-[1.4rem] bg-primary px-4 py-4 text-center text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]">
                     <p className="text-2xl font-black">{stat.value}</p>
                     <p className="mt-1 text-[10px] font-black uppercase tracking-[0.22em] text-primary-foreground/90">{stat.label}</p>
                   </div>
@@ -107,14 +106,14 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 pb-16 pt-10">
+      <section className="mx-auto max-w-6xl px-4 pb-12 pt-10">
         <div className="mb-4 grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
-          <div className="relative overflow-hidden rounded-3xl bg-card shadow-glow p-8">
+          <div className="animate-enter-up relative overflow-hidden rounded-3xl bg-card p-6 shadow-glow sm:p-8">
             <div className="pointer-events-none absolute right-0 top-0 size-64 -translate-y-1/3 translate-x-1/3 rounded-full bg-primary/10 blur-2xl" />
-            <span className="mb-4 inline-block rounded-full bg-accent/20 px-3 py-0.5 text-xs font-bold uppercase tracking-wider text-accent drop-shadow-sm">
+            <span className="badge-pill mb-4 inline-flex bg-accent/20 px-3 text-xs font-bold uppercase tracking-wider text-accent drop-shadow-sm">
               Why It Works
             </span>
-            <h2 className="mb-3 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
+            <h2 className="mb-3 text-2xl font-black tracking-tight text-foreground sm:text-4xl">
               Survey first. Reveal later. Let the room decide the board.
             </h2>
             <p className="mb-6 max-w-lg text-sm leading-7 text-foreground/90">
@@ -125,7 +124,7 @@ export default function Home() {
 
             <div className="grid gap-3 sm:grid-cols-3">
               {featureCards.map(({ title, copy, Icon }) => (
-                <div key={title} className="rounded-[1.6rem] bg-background/80 p-4 shadow-sm">
+                <div key={title} className="rounded-[1.6rem] bg-background/80 p-4 shadow-sm transition-transform duration-300 hover:-translate-y-1">
                   <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                     <Icon className="size-5" />
                   </div>
@@ -140,13 +139,13 @@ export default function Home() {
             </Link>
           </div>
 
-          <div className="stage-panel marquee-frame flex flex-col gap-3 rounded-3xl p-6">
+          <div className="animate-enter-up-delay stage-panel marquee-frame flex flex-col gap-3 rounded-3xl p-6">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-black text-foreground">Three Easy Steps</h3>
-              <span className="rounded-full bg-background/90 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-primary">Fast Setup</span>
+              <span className="badge-pill bg-background/90 px-3 text-[10px] font-black uppercase tracking-[0.22em] text-primary">Fast Setup</span>
             </div>
             {steps.map(({ num, title, description }) => (
-              <div key={num} className="flex gap-3 rounded-[1.4rem] bg-background/90 px-4 py-4">
+              <div key={num} className="flex gap-3 rounded-[1.4rem] bg-background/90 px-4 py-4 transition-transform duration-300 hover:-translate-y-1">
                 <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
                   {num}
                 </div>
@@ -165,14 +164,14 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="flex flex-col justify-center rounded-3xl gradient-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] px-6 py-5 hover:scale-105 transition-transform">
-            <p className="text-4xl font-black text-primary-foreground">Live</p>
+          <div className="flex min-h-36 flex-col justify-center rounded-3xl gradient-primary px-6 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition-transform hover:scale-[1.02] sm:min-h-0">
+            <p className="text-3xl font-black text-primary-foreground sm:text-4xl">Live</p>
             <p className="mt-1 text-xs font-semibold uppercase tracking-widest text-primary-foreground/90">
               Real-time Game Play
             </p>
           </div>
 
-          <div className="flex items-center gap-4 rounded-[2rem] bg-card px-6 py-5 shadow-glow hover:scale-105 transition-transform">
+          <div className="flex min-h-36 items-center gap-4 rounded-[2rem] bg-card px-6 py-5 shadow-glow transition-transform hover:scale-[1.02] sm:min-h-0">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
               <Zap className="size-5" />
             </div>
@@ -184,7 +183,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex flex-col justify-center rounded-3xl bg-secondary px-6 py-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] text-secondary-foreground hover:scale-105 transition-transform">
+          <div className="flex min-h-36 flex-col justify-center rounded-3xl bg-secondary px-6 py-5 text-secondary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-transform hover:scale-[1.02] sm:min-h-0">
             <p className="mb-1 text-xs">★★★★★</p>
             <p className="text-sm font-semibold italic text-secondary-foreground/90">
               "Better than the actual show!"
@@ -196,33 +195,42 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Footer strip ──────────────────────────────────────────────── */}
-      <div className="border-t-0 bg-primary px-4 py-8 text-center mt-auto shadow-glow">
-        <p className="mb-3 text-xs font-bold uppercase tracking-widest text-white/60">
-          Feud
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
-          <Button variant="ghost" size="sm" className="text-white/80 hover:text-white">
-            <Link to="/rules" className='flex items-center gap-1'>
-              <BookOpen className="mr-1.5 size-4" />
-              Rules
-            </Link>
-          </Button>
-          <Button variant="ghost" size="sm" className="text-white/80 hover:text-white">
-            <Link to="/admin/create" className='flex'>
-              <Plus className="mr-1.5 size-4" />
-              Create Game
-            </Link>
-          </Button>
-          <Button variant="ghost" size="sm" className="text-white/80 hover:text-white">
-            <Link to="/join" className='flex'>
-              <Users className="mr-1.5 size-4" />
-              Join Game
-            </Link>
-          </Button>
+      <section className="mx-auto max-w-6xl px-4 pb-12">
+        <div className="theme-panel-strong animate-enter-up rounded-[2rem] p-6 sm:p-8">
+          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+            <div>
+              <div className="badge-pill mb-4 gap-2 bg-primary/10 px-3 text-[11px] font-black uppercase tracking-[0.22em] text-primary">
+                <Sparkles className="size-3.5" />
+                Ready For Showtime
+              </div>
+              <h2 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+                Start fast, keep the board clean, and let the game carry the energy.
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-soft">
+                Everything you need is already on the page. No extra footer menu, just the next useful moves.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              {closingLinks.map(({ to, title, copy }) => (
+                <Link
+                  key={title}
+                  to={to}
+                  className="group rounded-[1.5rem] border border-border/50 bg-background/70 px-4 py-4 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:bg-background"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-black text-foreground">{title}</p>
+                      <p className="mt-1 text-xs leading-5 text-soft">{copy}</p>
+                    </div>
+                    <ArrowRight className="size-4 shrink-0 text-primary transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
-        <p className="mt-4 text-xs text-white/50">© 2026 Feud</p>
-      </div>
+      </section>
     </main>
   );
 }
@@ -244,7 +252,7 @@ function BuzzerButton({
     <Link
       to={to}
       className={cn(
-        'flex w-36 flex-col items-center justify-center gap-2.5 rounded-[20px] py-7 transition-all duration-100 ease-out sm:w-44 sm:py-8',
+        'flex min-h-34 w-full min-w-0 flex-col items-center justify-center gap-2.5 rounded-[20px] px-3 py-5 text-center transition-all duration-150 ease-out sm:min-h-36 sm:w-44 sm:py-8',
         className,
       )}
     >
@@ -264,7 +272,7 @@ const steps = [
   { num: '3', title: 'Play Live', description: 'Reveal answers, strike out, and crown a winner.' },
 ];
 
-const heroBadges = ['Survey Powered', 'Live Hosted', 'SSE Board'];
+const heroBadges = ['Survey Powered', 'Live Hosted', 'Game Board'];
 
 const heroStats = [
   { value: '3', label: 'Phases' },
@@ -305,5 +313,23 @@ const featureCards = [
     title: 'Board Sync',
     copy: 'Snapshots and live events keep the board usable even after refresh or stream hiccups.',
     Icon: Zap,
+  },
+];
+
+const closingLinks = [
+  {
+    to: '/admin/create',
+    title: 'Create a game',
+    copy: 'Set up your questions and open the room in minutes.',
+  },
+  {
+    to: '/join',
+    title: 'Join a room',
+    copy: 'Enter a code and head straight into the survey or board.',
+  },
+  {
+    to: '/rules',
+    title: 'Review the rules',
+    copy: 'Refresh the format before you put the board on screen.',
   },
 ];

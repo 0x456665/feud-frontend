@@ -9,6 +9,7 @@ import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import { useCreateGameMutation } from '@/store/api/adminApi';
 import { setAdminSession } from '@/store/slices/adminSessionSlice';
 import type { AppDispatch } from '@/store';
+import { getErrorMessage } from '@/lib/utils';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -23,6 +24,8 @@ interface QuestionDraft {
 
 let localId = 0;
 function nextId() { return ++localId; }
+
+const MAX_QUESTION_OPTIONS = 15;
 
 function makeQuestion(): QuestionDraft {
   return {
@@ -46,6 +49,7 @@ export default function CreateGame() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const [createGame, { isLoading }] = useCreateGameMutation();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ── Form state ─────────────────────────────────────────────────────────
   const [gameName, setGameName] = useState('');
@@ -55,10 +59,6 @@ export default function CreateGame() {
   const [questions, setQuestions] = useState<QuestionDraft[]>([makeQuestion()]);
 
   // ── Question helpers ───────────────────────────────────────────────────
-
-  function addQuestion() {
-    setQuestions((prev) => [...prev, makeQuestion()]);
-  }
 
   function removeQuestion(id: number) {
     setQuestions((prev) => prev.filter((q) => q.id !== id));
@@ -89,7 +89,7 @@ export default function CreateGame() {
   function addOption(qId: number) {
     setQuestions((prev) =>
       prev.map((q) =>
-        q.id === qId && q.options.length < 10
+        q.id === qId && q.options.length < MAX_QUESTION_OPTIONS
           ? { ...q, options: [...q.options, ''] }
           : q,
       ),
@@ -130,11 +130,17 @@ export default function CreateGame() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    if (isLoading || isSubmitting) {
+      return;
+    }
+
     const error = validate();
     if (error) {
       toast.error(error);
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const result = await createGame({
@@ -160,9 +166,9 @@ export default function CreateGame() {
       toast.success(`Game "${result.game_code}" created!`);
       navigate(`/admin/game/${result.game_code}/created`);
     } catch (err: unknown) {
-      const msg =
-        (err as { message?: string })?.message ?? 'Failed to create game.';
-      toast.error(msg);
+      toast.error(getErrorMessage(err, 'Failed to create game.'));
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -175,15 +181,15 @@ export default function CreateGame() {
       {/* Main content */}
       <div className="flex-1 overflow-y-auto">
         <form onSubmit={handleSubmit}>
-          <div className="mx-auto max-w-3xl px-6 py-10">
+          <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
 
             {/* ── Heading row ── */}
             <div className="mb-8 flex items-start justify-between gap-4">
               <div>
-                <h1 className="text-4xl font-black tracking-tight text-primary">
+                <h1 className="text-3xl font-black tracking-tight text-primary sm:text-4xl">
                   Create New Game
                 </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <p className="mt-1 text-sm text-soft">
                   Define your stadium, set the stakes.
                 </p>
               </div>
@@ -212,7 +218,7 @@ export default function CreateGame() {
                 onChange={(e) => setGameName(e.target.value)}
                 maxLength={100}
                 required
-                className="h-14 rounded-[2rem] bg-card px-5 text-base placeholder:text-muted-foreground/60 border-0 shadow-glow focus-visible:ring-1 focus-visible:ring-primary"
+                className="theme-field h-12 rounded-[1.5rem] px-4 text-sm placeholder:text-faint focus-visible:ring-1 focus-visible:ring-primary sm:h-14 sm:px-5"
               />
             </section>
 
@@ -229,17 +235,17 @@ export default function CreateGame() {
                   <button
                     type="button"
                     onClick={() => setNumRounds((n) => Math.max(1, n - 1))}
-                    className="flex size-8 items-center justify-center rounded-full bg-white/20 text-secondary-foreground hover:bg-white/30 transition-colors"
+                    className="flex size-8 items-center justify-center rounded-full bg-white/20 text-secondary-foreground transition-colors hover:bg-white/30"
                   >
                     <Minus className="size-4" />
                   </button>
-                  <span className="w-8 text-center text-3xl font-black text-secondary-foreground">
+                  <span className="w-8 text-center text-2xl font-black text-secondary-foreground sm:text-3xl">
                     {numRounds}
                   </span>
                   <button
                     type="button"
                     onClick={() => setNumRounds((n) => Math.min(20, n + 1))}
-                    className="flex size-8 items-center justify-center rounded-full bg-white/20 text-secondary-foreground hover:bg-white/30 transition-colors"
+                    className="flex size-8 items-center justify-center rounded-full bg-white/20 text-secondary-foreground transition-colors hover:bg-white/30"
                   >
                     <Plus className="size-4" />
                   </button>
@@ -258,7 +264,7 @@ export default function CreateGame() {
                   { id: 'teamA', label: 'TEAM 1', value: teamAName, setter: setTeamAName, placeholder: 'Type team name here...' },
                   { id: 'teamB', label: 'TEAM 2', value: teamBName, setter: setTeamBName, placeholder: 'Type team name here...' },
                 ].map(({ id, label, value, setter, placeholder }) => (
-                  <div key={id} className="rounded-[2rem] bg-card p-5 shadow-glow">
+                  <div key={id} className="theme-panel rounded-[1.5rem] p-4 sm:p-5">
                     <div className="mb-2 flex items-center justify-between">
                       <span className="text-[10px] font-black tracking-widest text-primary uppercase">
                         {label}
@@ -270,7 +276,7 @@ export default function CreateGame() {
                       value={value}
                       onChange={(e) => setter(e.target.value)}
                       maxLength={50}
-                      className="w-full bg-transparent text-base text-foreground placeholder:text-muted-foreground/60 outline-none font-bold"
+                      className="w-full bg-transparent text-sm font-bold text-foreground outline-none placeholder:text-faint sm:text-base"
                     />
                   </div>
                 ))}
@@ -286,8 +292,8 @@ export default function CreateGame() {
                     <div
                       key={q.id}
                       className={isCurrentRound
-                        ? 'rounded-[2rem] bg-gradient-primary shadow-glow p-6 text-primary-foreground'
-                        : 'rounded-[2rem] border-none bg-card shadow-glow p-6'
+                        ? 'theme-inverse-panel rounded-[1.75rem] p-5 sm:p-6'
+                        : 'theme-panel rounded-[1.75rem] p-5 sm:p-6'
                       }
                     >
                       {/* Header row */}
@@ -346,17 +352,17 @@ export default function CreateGame() {
                             onChange={(e) => updateQuestionText(q.id, e.target.value)}
                             maxLength={500}
                             rows={2}
-                            className="w-full rounded-2xl bg-white/10 px-5 py-4 text-base font-bold text-white placeholder:text-white/50 outline-none resize-none focus:bg-white/20 transition-colors"
+                            className="theme-inverse-field w-full resize-none rounded-2xl px-4 py-3 text-sm font-bold text-white outline-none transition-colors placeholder:text-white/55 focus:bg-white/20 sm:px-5 sm:text-base"
                           />
 
                           {/* Answer options */}
                           <div className="mt-5">
-                            <p className="mb-3 text-[10px] font-black tracking-widest text-white/70 uppercase">
+                            <p className="mb-3 text-[10px] font-black uppercase tracking-widest text-contrast-soft">
                               Answer Options &amp; Point Values
                             </p>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               {q.options.map((opt, i) => (
-                                <div key={i} className="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 focus-within:bg-white/20 transition-colors">
+                                <div key={i} className="theme-inverse-field flex items-center gap-3 rounded-2xl px-4 py-3 transition-colors focus-within:bg-white/20">
                                   <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-black text-secondary-foreground shadow-sm">
                                     {i + 1}
                                   </span>
@@ -365,7 +371,7 @@ export default function CreateGame() {
                                     value={opt}
                                     onChange={(e) => updateOption(q.id, i, e.target.value)}
                                     maxLength={200}
-                                    className="flex-1 bg-transparent text-sm font-semibold text-white placeholder:text-white/50 outline-none min-w-0"
+                                    className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-white outline-none placeholder:text-white/55"
                                   />
                                   <button
                                     type="button"
@@ -379,14 +385,14 @@ export default function CreateGame() {
                               ))}
                             </div>
 
-                            {q.options.length < 10 && (
+                            {q.options.length < MAX_QUESTION_OPTIONS && (
                               <button
                                 type="button"
                                 onClick={() => addOption(q.id)}
                                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/20 py-3 text-sm font-bold text-white/70 hover:border-white/40 hover:bg-white/5 transition-all"
                               >
                                 <Plus className="size-4" />
-                                Add Another Answer Option
+                                Add Another Answer Option ({q.options.length}/{MAX_QUESTION_OPTIONS})
                               </button>
                             )}
                           </div>
@@ -422,55 +428,19 @@ export default function CreateGame() {
               </div>
             </section>
 
-            {/* ── QUESTION PIPELINE ── */}
-            <section className="mb-10">
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-base font-bold text-foreground">Question Pipeline</h2>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={addQuestion}
-                  className="gap-1.5"
-                >
-                  <Plus className="size-3.5" />
-                  Add Question
-                </Button>
-              </div>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {questions.map((q, i) => (
-                  <div key={q.id} className="rounded-[2rem] bg-card p-5 text-sm shadow-glow">
-                    <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase mb-1">
-                      Question {i + 1}
-                    </p>
-                    <p className="font-semibold text-foreground truncate">
-                      {q.question.trim() || <span className="text-muted-foreground italic">Empty…</span>}
-                    </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {q.options.filter(o => o.trim()).length} Answers
-                    </p>
-                  </div>
-                ))}
-                {/* Placeholder for next */}
-                <div className="rounded-[2rem] border-2 border-dashed border-border p-4 text-sm text-muted-foreground/50 flex items-center justify-center min-h-25">
-                  Placeholder for Next Round...
-                </div>
-              </div>
-            </section>
-
             {/* ── SUBMIT ── */}
             <div className="text-center">
               <button
                 type="submit"
-                disabled={isLoading}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-14 py-4 text-base font-black tracking-wider text-primary-foreground uppercase shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition-transform hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-50"
+                disabled={isLoading || isSubmitting}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-10 py-3 text-sm font-black uppercase tracking-wider text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition-transform hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-50 sm:px-14 sm:text-base"
               >
-                {isLoading ? (
+                {isLoading || isSubmitting ? (
                   <Loader2 className="size-5 animate-spin" />
                 ) : null}
-                {isLoading ? 'Creating…' : 'Launch Game Arena'}
+                {isLoading || isSubmitting ? 'Creating…' : 'Launch Game Arena'}
               </button>
-              <p className="mt-3 text-xs text-muted-foreground">
+              <p className="mt-3 text-xs text-soft">
                 All set? This will finalise the setup and generate your room code.
               </p>
             </div>

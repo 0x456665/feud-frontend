@@ -21,41 +21,32 @@ interface AnswerTileProps {
  */
 export function AnswerTile({ rank, optionText, points, revealed }: AnswerTileProps) {
   return (
-    <div
-      className={cn(
-        'relative flex h-16 items-center justify-between overflow-hidden rounded-2xl px-5 text-sm font-black tracking-widest transition-all duration-300 uppercase',
-        revealed
-          ? 'bg-gradient-primary text-primary-foreground shadow-glow'
-          : 'bg-card text-muted-foreground shadow-sm',
-      )}
-    >
-      {/* Rank number badge */}
-      <span
-        className={cn(
-          'flex size-8 shrink-0 items-center justify-center rounded-full text-sm font-black',
-          revealed ? 'bg-white/20 text-white' : 'bg-muted text-muted-foreground',
-        )}
-      >
-        {rank}
-      </span>
+    <div className={cn('answer-tile relative h-16 w-full perspective-800', revealed && 'is-flipped')}>
+      <div className="answer-tile-inner relative h-full w-full transition-transform duration-500 ease-out">
+        <div className="answer-tile-face answer-tile-front absolute inset-0 flex items-center justify-between overflow-hidden rounded-2xl bg-card px-5 text-sm font-black tracking-widest text-muted-foreground shadow-sm">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground text-sm font-black">
+            {rank}
+          </span>
+          <span className="mx-3 flex-1" />
+          <span className="min-w-12" />
+        </div>
 
-      {/* Answer text — only visible when revealed */}
-      {revealed && optionText ? (
-        <span className="mx-3 flex-1 text-center font-bold tracking-[0.2em] text-shadow-sm">
-          {optionText}
-        </span>
-      ) : (
-        <span className="mx-3 flex-1" />
-      )}
-
-      {/* Points badge */}
-      {revealed && points !== undefined ? (
-        <span className="flex min-w-12 items-center justify-center rounded-full bg-secondary px-3 py-1 text-sm font-black text-secondary-foreground shadow-sm">
-          {points}
-        </span>
-      ) : (
-        <span className="min-w-12" />
-      )}
+        <div className="answer-tile-face answer-tile-back absolute inset-0 flex items-center justify-between overflow-hidden rounded-2xl bg-gradient-primary px-5 text-sm font-black tracking-widest text-primary-foreground shadow-glow">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/20 text-white text-sm font-black">
+            {rank}
+          </span>
+          <span className="mx-3 flex-1 text-center font-bold tracking-[0.2em] text-shadow-sm opacity-0 animate-answer-text-fade">
+            {optionText}
+          </span>
+          {points !== undefined ? (
+            <span className="flex min-w-12 items-center justify-center rounded-full bg-secondary px-3 py-1 text-sm font-black text-secondary-foreground shadow-sm">
+              {points}
+            </span>
+          ) : (
+            <span className="min-w-12" />
+          )}
+        </div>
+      </div>
     </div>
   );
 }

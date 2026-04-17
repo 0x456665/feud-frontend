@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import {
@@ -12,12 +12,14 @@ import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import {
   useGetGameQuery,
   useGetSurveyStatsQuery,
+  useGetSurveyVoterCountQuery,
   useSetVotingStateMutation,
   useStartGameMutation,
 } from '@/store/api/adminApi';
 import { useGetPlayerCountQuery } from '@/store/api/playerApi';
 import type { RootState } from '@/store';
 import type { VotingState } from '@/types';
+import { getErrorMessage } from '@/lib/utils';
 
 /**
  * Admin: Game Lobby page.
@@ -40,6 +42,10 @@ export default function GameLobby() {
     // Only fetch stats when voting is closed (data is ready then)
     skip: game?.voting_state !== 'CLOSED',
   });
+  const { data: surveyVoterStats } = useGetSurveyVoterCountQuery(gameCode, {
+    pollingInterval: 10_000,
+    skip: !gameCode,
+  });
   const { data: playerCount, refetch: refetchCount } = useGetPlayerCountQuery(gameCode, {
     pollingInterval: 10_000, // refresh every 10 s
   });
@@ -50,6 +56,12 @@ export default function GameLobby() {
   // ── Local state ────────────────────────────────────────────────────────
   const [copied, setCopied] = useState(false);
   const [expandedStats, setExpandedStats] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (game?.play_state === 'IN_PROGRESS') {
+      navigate(`/admin/game/${gameCode}/live`, { replace: true });
+    }
+  }, [game?.play_state, gameCode, navigate]);
 
   // ── Clipboard ─────────────────────────────────────────────────────────
 
@@ -90,7 +102,7 @@ export default function GameLobby() {
       }
       toast.success(`Voting ${state.toLowerCase()}.`);
     } catch (err: unknown) {
-      toast.error((err as { message?: string })?.message ?? 'Failed to update voting state.');
+      toast.error(getErrorMessage(err, 'Failed to update voting state.'));
     }
   }
 
@@ -107,9 +119,9 @@ export default function GameLobby() {
     try {
       await startGame(gameCode).unwrap();
       toast.success('Game started! Redirecting to live control…');
-      navigate(`/admin/game/${gameCode}/live`);
+      navigate(`/admin/game/${gameCode}/live`, { replace: true });
     } catch (err: unknown) {
-      toast.error((err as { message?: string })?.message ?? 'Failed to start game.');
+      toast.error(getErrorMessage(err, 'Failed to start game.'));
     }
   }
 
@@ -165,15 +177,15 @@ export default function GameLobby() {
                   Game {gameCode}
                 </span>
               </div>
-              <h1 className="mt-5 text-4xl font-black tracking-tight text-foreground">
+                <h1 className="mt-5 text-3xl font-black tracking-tight text-primary sm:text-4xl">
                 {game.game_name}
               </h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-foreground/90">
+              <p className="mt-2 max-w-xl text-sm leading-6 text-primary-foreground">
                 Share the code, watch audience count climb, close the survey when the room is ready,
                 then switch straight into the live reveal board.
               </p>
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <div className="mt-6 grid gap-3 sm:grid-cols-4">
                 <div className="rounded-[1.5rem] bg-background/90 px-4 py-4 shadow-sm">
                   <p className="text-[10px] font-black uppercase tracking-[0.22em] text-foreground/90">Questions Loaded</p>
                   <p className="mt-2 text-3xl font-black text-primary">{game.questions.length}</p>
@@ -181,6 +193,10 @@ export default function GameLobby() {
                 <div className="rounded-[1.5rem] bg-background/90 px-4 py-4 shadow-sm">
                   <p className="text-[10px] font-black uppercase tracking-[0.22em] text-foreground/90">Rounds Planned</p>
                   <p className="mt-2 text-3xl font-black text-primary">{game.num_rounds}</p>
+                </div>
+                <div className="rounded-[1.5rem] bg-background/90 px-4 py-4 shadow-sm">
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-foreground/90">Survey Voters</p>
+                  <p className="mt-2 text-3xl font-black text-primary">{surveyVoterStats?.totalVoters ?? 0}</p>
                 </div>
                 <div className="rounded-[1.5rem] bg-background/90 px-4 py-4 shadow-sm">
                   <p className="text-[10px] font-black uppercase tracking-[0.22em] text-foreground/90">Players Ready</p>
@@ -231,14 +247,14 @@ export default function GameLobby() {
 
             {/* Left: phase card */}
             <div className="rounded-3xl bg-card p-7 shadow-glow">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent/20 px-3 py-1 text-[10px] font-black tracking-widest text-accent uppercase mb-4 drop-shadow-sm">
+              <span className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-accent/20 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-accent drop-shadow-sm">
                 <Circle className="size-2 fill-accent" />
                 Current Phase
               </span>
-              <h1 className="text-3xl font-black tracking-tight text-foreground mb-2">
+              <h1 className="mb-2 text-2xl font-black tracking-tight text-foreground sm:text-3xl">
                 {votingLabel[game.voting_state]}
               </h1>
-              <p className="text-sm text-foreground/90 mb-6 max-w-sm">
+              <p className="mb-6 max-w-sm text-sm text-soft">
                 {votingDescription[game.voting_state]}
               </p>
 
@@ -249,7 +265,7 @@ export default function GameLobby() {
                     type="button"
                     onClick={() => changeVotingState('CLOSED')}
                     disabled={votingLoading}
-                    className="inline-flex items-center gap-2 rounded-full gradient-primary px-6 py-3 text-sm font-bold text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition-transform hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-full gradient-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition-transform hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-50"
                   >
                     {votingLoading ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
                     Close Survey
@@ -260,7 +276,7 @@ export default function GameLobby() {
                     type="button"
                     onClick={handleStartGame}
                     disabled={startLoading}
-                    className="inline-flex items-center gap-2 rounded-full bg-secondary px-6 py-3 text-sm font-bold text-secondary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-transform hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-50"
+                    className="inline-flex items-center gap-2 rounded-full bg-secondary px-5 py-2.5 text-sm font-bold text-secondary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] transition-transform hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-50"
                   >
                     {startLoading ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
                     Start Live Game
@@ -271,7 +287,7 @@ export default function GameLobby() {
                     type="button"
                     onClick={() => changeVotingState('PAUSED')}
                     disabled={votingLoading}
-                    className="inline-flex items-center rounded-full border border-border/15 px-6 py-3 text-sm font-medium text-foreground hover:bg-black/5 hover:scale-105 transition-transform disabled:scale-100 disabled:opacity-50"
+                    className="inline-flex items-center rounded-full border border-border/30 px-5 py-2.5 text-sm font-medium text-foreground transition-transform hover:scale-105 hover:bg-black/5 disabled:scale-100 disabled:opacity-50"
                   >
                     Pause Collection
                   </button>
@@ -281,7 +297,7 @@ export default function GameLobby() {
                     type="button"
                     onClick={() => changeVotingState('OPEN')}
                     disabled={votingLoading}
-                    className="inline-flex items-center rounded-full border border-border/15 px-6 py-3 text-sm font-medium text-foreground hover:bg-black/5 hover:scale-105 transition-transform disabled:scale-100 disabled:opacity-50"
+                    className="inline-flex items-center rounded-full border border-border/30 px-5 py-2.5 text-sm font-medium text-foreground transition-transform hover:scale-105 hover:bg-black/5 disabled:scale-100 disabled:opacity-50"
                   >
                     Resume Collection
                   </button>
@@ -290,8 +306,8 @@ export default function GameLobby() {
             </div>
 
             {/* Right: Response count card */}
-            <div className="rounded-3xl bg-card p-6 shadow-glow text-center">
-              <p className="text-6xl font-black text-primary mb-1">
+            <div className="rounded-3xl bg-card p-6 shadow-glow text-center flex flex-col items-center justify-center">
+              <p className="mb-1 text-5xl font-black text-primary sm:text-6xl">
                 {playerCount?.count ?? '—'}
               </p>
               <p className="text-xs font-bold tracking-widest text-foreground/90 uppercase mb-3">
@@ -301,9 +317,9 @@ export default function GameLobby() {
                 value={Math.min(((playerCount?.count ?? 0) / 80) * 100, 100)}
                 className="h-1.5"
               />
-              <p className="mt-2 text-xs text-foreground/90">
+              {/* <p className="mt-2 text-xs text-foreground/90">
                 Target: 80 Participants
-              </p>
+              </p> */}
             </div>
           </div>
 

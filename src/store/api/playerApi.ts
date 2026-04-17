@@ -58,7 +58,7 @@ export const playerApi = createApi({
 
     // ── POST /games/:gameCode/vote ─────────────────────────────────────────
     // Submit one or more survey answers in a single batch. Each vote item
-    // must include gameId, questionId, and 4–6 option UUIDs.
+    // must include gameId, questionId, and up to 3 option UUIDs.
     // Rate-limited to 1 request per 10 s per IP.
     castVote: builder.mutation<
       { message: string },

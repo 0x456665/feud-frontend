@@ -7,7 +7,7 @@ import {
   useGetPublicQuestionsQuery,
   useCastVoteMutation,
 } from '@/store/api/playerApi';
-import type { PublicQuestion } from '@/types';
+import { getErrorMessage } from '@/lib/utils';
 
 function shuffleArray<T>(items: T[]) {
   const shuffled = [...items];
@@ -32,8 +32,10 @@ export default function VotingPage() {
   const [castVote] = useCastVoteMutation();
 
   const [selections, setSelections] = useState<Record<string, Set<string>>>({});
+  const [saved, setSaved] = useState<Set<string>>(new Set());
   const [submitted, setSubmitted] = useState<Set<string>>(new Set());
   const [currentIdx, setCurrentIdx] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const shuffledQuestions = useMemo(
     () =>
       questionsData
@@ -50,14 +52,26 @@ export default function VotingPage() {
       const current = new Set(prev[questionId] ?? []);
       if (current.has(optionId)) {
         current.delete(optionId);
-      } else if (current.size < 6) {
+      } else if (current.size < 3) {
         current.add(optionId);
       } else {
-        toast.warning('You can select up to 6 options.');
+        toast.warning('You can select up to 3 options.');
         return prev;
       }
       return { ...prev, [questionId]: current };
     });
+  }
+
+  function handleSaveCurrent(questionId: string) {
+    setSaved((prev) => {
+      const next = new Set(prev);
+      next.add(questionId);
+      return next;
+    });
+
+    if (currentIdx < (questionsData?.questions.length ?? 0) - 1) {
+      setCurrentIdx((index) => index + 1);
+    }
   }
 
   function buildVotePayload(questionIds: string[]) {
@@ -71,31 +85,37 @@ export default function VotingPage() {
   }
 
   async function submitVotes(questionIds: string[]) {
-    if (!questionsData) return;
-    const validQuestionIds = questionIds.filter(
-      (questionId) => (selections[questionId]?.size ?? 0) >= 4,
-    );
-    if (validQuestionIds.length === 0) {
-      toast.error('Select at least 4 options for each question before submitting.');
+    if (!questionsData || isSubmitting) return;
+
+    const pendingQuestionIds = questionIds.filter((questionId) => !submitted.has(questionId));
+    if (pendingQuestionIds.length === 0) {
+      toast.error('Save at least one question before submitting.');
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       await castVote({
         gameCode,
-        payload: buildVotePayload(validQuestionIds),
+        payload: buildVotePayload(pendingQuestionIds),
       }).unwrap();
 
       setSubmitted((prev) => {
         const next = new Set(prev);
-        validQuestionIds.forEach((id) => next.add(id));
+        pendingQuestionIds.forEach((id) => next.add(id));
+        return next;
+      });
+      setSaved((prev) => {
+        const next = new Set(prev);
+        pendingQuestionIds.forEach((id) => next.delete(id));
         return next;
       });
 
       toast.success(
-        validQuestionIds.length === 1
-          ? 'Vote submitted!'
-          : `${validQuestionIds.length} questions submitted!`,
+        pendingQuestionIds.length === 1
+          ? 'Survey answer submitted!'
+          : `${pendingQuestionIds.length} saved questions submitted!`,
       );
     } catch (err: unknown) {
       const status = (err as { status?: number })?.status;
@@ -103,37 +123,25 @@ export default function VotingPage() {
         toast.error('You have already voted on one or more questions.');
         setSubmitted((prev) => {
           const next = new Set(prev);
-          validQuestionIds.forEach((id) => next.add(id));
+          pendingQuestionIds.forEach((id) => next.add(id));
           return next;
         });
         return;
       }
 
-      const msg =
-        (err as { data?: { message?: string } })?.data?.message ??
-        'Could not submit vote. Try again.';
-      toast.error(msg);
-    }
-  }
-
-  async function handleSubmitCurrent(question: PublicQuestion) {
-    await submitVotes([question.questionId]);
-    if (currentIdx < (questionsData?.questions.length ?? 0) - 1) {
-      setCurrentIdx((i) => i + 1);
+      toast.error(getErrorMessage(err, 'Could not submit vote. Try again.'));
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   async function handleSubmitReadyQuestions() {
     const readyQuestionIds = questionsData?.questions
-      .filter(
-        (question) =>
-          !submitted.has(question.questionId) &&
-          (selections[question.questionId]?.size ?? 0) >= 4,
-      )
+      .filter((question) => !submitted.has(question.questionId) && saved.has(question.questionId))
       .map((question) => question.questionId);
 
     if (!readyQuestionIds || readyQuestionIds.length === 0) {
-      toast.error('Select at least 4 options for one or more questions first.');
+      toast.error('Save one or more questions before submitting.');
       return;
     }
 
@@ -172,9 +180,7 @@ export default function VotingPage() {
   const questions = shuffledQuestions;
   const readyQuestionIds = questions
     .filter(
-      (question) =>
-        !submitted.has(question.questionId) &&
-        (selections[question.questionId]?.size ?? 0) >= 4,
+      (question) => !submitted.has(question.questionId) && saved.has(question.questionId),
     )
     .map((question) => question.questionId);
 
@@ -192,6 +198,7 @@ export default function VotingPage() {
   const safeCurrentIdx = Math.min(currentIdx, questions.length - 1);
   const currentQuestion = questions[safeCurrentIdx];
   const selected = selections[currentQuestion.questionId] ?? new Set<string>();
+  const isSaved = saved.has(currentQuestion.questionId);
   const isSubmitted = submitted.has(currentQuestion.questionId);
   const allDone = questions.every((q) => submitted.has(q.questionId));
 
@@ -214,47 +221,54 @@ export default function VotingPage() {
 
   return (
     <main className="min-h-[calc(100vh-56px)] bg-background">
-      <div className="pt-8 pb-2 text-center">
-        <p className="text-sm font-bold text-accent">
-          Pick between 4 and 6 answers for this question
+      <div className="px-4 pt-6 pb-2 text-center">
+        <p className="text-sm font-bold text-accent sm:text-[0.95rem]">
+          Pick up to 3 answers for this question, or skip it.
         </p>
       </div>
 
-      <div className="mx-auto max-w-md px-4 pb-10">
-        <div className="rounded-[2rem] bg-card p-6 shadow-glow">
+      <div className="mx-auto max-w-md px-4 pb-10 sm:max-w-lg">
+        <div className="theme-panel rounded-[1.75rem] p-5 sm:p-6">
           <div className="mb-4 flex items-start justify-between">
             <div>
-              <p className="text-[10px] font-black tracking-widest text-muted-foreground uppercase mb-1">
-                Round {String(safeCurrentIdx + 1).padStart(2, '0')}
+              <p className="mb-1 text-[10px] font-black tracking-widest text-muted-foreground uppercase">
+                Round {String(safeCurrentIdx + 1).padStart(2, "0")}
               </p>
-              <h2 className="text-2xl font-black tracking-tight text-foreground leading-tight">
-                {currentQuestion.question.length > 40
-                  ? currentQuestion.question.slice(0, 40) + '...'
-                  : currentQuestion.question}
+              <h2 className="text-xl leading-tight font-black tracking-tight text-foreground sm:text-2xl">
+                &ldquo;
+                {
+                  // currentQuestion.question.length > 40
+                  //   ? currentQuestion.question.slice(0, 40) + '...'
+                  //   :
+                  currentQuestion.question
+                }
+                &rdquo;
               </h2>
             </div>
-            <span className="ml-4 shrink-0 rounded-full bg-primary/15 px-3 py-1 text-xs font-bold text-primary">
-                {safeCurrentIdx + 1} / {questions.length}
+            <span className="ml-4 shrink-0 rounded-full bg-primary/15 px-2.5 py-1 text-[11px] font-bold text-primary">
+              {safeCurrentIdx + 1} / {questions.length}
             </span>
           </div>
 
-          <p className="mb-5 rounded-xl bg-background/60 px-4 py-3 text-sm italic text-muted-foreground">
+          {/* <p className="mb-4 rounded-xl bg-background/70 px-4 py-3 text-sm italic text-soft">
             &ldquo;{currentQuestion.question}&rdquo;
-          </p>
+          </p> */}
 
-          <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
+          <div className="max-h-78 space-y-2 overflow-y-auto pr-1">
             {currentQuestion.options.map((opt) => {
-              const isSelected = selected.has(opt.optionId);
+              const isSelected = selected.has(opt.optionId)
               return (
                 <button
                   key={opt.optionId}
                   type="button"
                   disabled={isSubmitted}
-                  onClick={() => toggleOption(currentQuestion.questionId, opt.optionId)}
-                  className={`flex w-full items-center justify-between rounded-2xl border px-5 py-4 text-sm font-semibold transition-all ${
+                  onClick={() =>
+                    toggleOption(currentQuestion.questionId, opt.optionId)
+                  }
+                  className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold transition-all sm:px-5 ${
                     isSelected
-                      ? 'border-primary bg-primary/10 text-primary'
-                      : 'border-border bg-background/80 text-foreground hover:border-primary/50 hover:bg-primary/5'
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background/80 text-foreground hover:border-primary/50 hover:bg-primary/5"
                   } disabled:opacity-60`}
                 >
                   <span>{opt.text}</span>
@@ -262,34 +276,30 @@ export default function VotingPage() {
                     <CheckCircle2 className="size-5 shrink-0 text-primary" />
                   )}
                 </button>
-              );
+              )
             })}
           </div>
 
           {!isSubmitted ? (
-            <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_1fr]">
+            <div className="mt-4 space-y-3">
+              <div className="text-soft rounded-2xl bg-background/70 px-4 py-3 text-xs">
+                Save marks this question as ready for the single submit action
+                below.
+              </div>
               <button
                 type="button"
-                onClick={() => {
-                  if (currentIdx < questions.length - 1) {
-                    setCurrentIdx((i) => i + 1);
-                  }
-                }}
-                className="rounded-3xl border border-border bg-background px-4 py-4 text-sm font-black uppercase tracking-wider text-foreground transition hover:border-primary/70"
+                onClick={() => handleSaveCurrent(currentQuestion.questionId)}
+                className="w-full rounded-3xl border border-border bg-background px-4 py-3.5 text-sm font-black tracking-wider text-foreground uppercase transition hover:border-primary/70"
               >
-                {safeCurrentIdx < questions.length - 1 ? 'Save & next' : 'Save'}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSubmitCurrent(currentQuestion)}
-                disabled={selected.size < 4}
-                className="rounded-3xl gradient-primary py-4 text-sm font-black uppercase tracking-wider text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition-transform hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-50"
-              >
-                Submit now
+                {isSaved
+                  ? "Saved"
+                  : safeCurrentIdx < questions.length - 1
+                    ? "Save & next"
+                    : "Save"}
               </button>
             </div>
           ) : (
-            <div className="mt-5 flex items-center justify-center gap-2 rounded-3xl bg-green-100 py-4 text-sm font-bold text-green-700">
+            <div className="mt-5 flex items-center justify-center gap-2 rounded-3xl bg-green-100 py-3 text-sm font-bold text-green-700">
               <CheckCircle2 className="size-5" />
               Vote submitted!
             </div>
@@ -304,36 +314,54 @@ export default function VotingPage() {
                 type="button"
                 onClick={() => setCurrentIdx(i)}
                 className={`size-2 rounded-full transition-all ${
-                  i === safeCurrentIdx ? 'bg-primary w-4' : submitted.has(q.questionId) ? 'bg-primary/40' : 'bg-border/30'
+                  i === safeCurrentIdx
+                    ? "w-4 bg-primary"
+                    : submitted.has(q.questionId)
+                      ? "bg-green-500/70"
+                      : saved.has(q.questionId)
+                        ? "bg-accent/70"
+                        : "bg-border/30"
                 }`}
               />
             ))}
           </div>
         )}
 
-        {readyQuestionIds.length > 0 && (
-          <div className="mt-4">
-            <Button className="w-full" onClick={handleSubmitReadyQuestions}>
-              Submit {readyQuestionIds.length} ready {readyQuestionIds.length === 1 ? 'question' : 'questions'}
-            </Button>
-          </div>
-        )}
+        <div className="mt-4">
+          <Button
+            className="h-10 w-full text-sm"
+            disabled={readyQuestionIds.length === 0 || isSubmitting}
+            onClick={handleSubmitReadyQuestions}
+          >
+            {isSubmitting
+              ? "Submitting..."
+              : readyQuestionIds.length === 0
+                ? "Submit Saved Answers"
+                : `Submit ${readyQuestionIds.length} saved ${readyQuestionIds.length === 1 ? "question" : "questions"}`}
+          </Button>
+        </div>
 
         <div className="mt-6 grid grid-cols-2 gap-3">
-          <div className="rounded-3xl bg-card p-4 shadow-glow">
-            <Trophy className="mb-2 size-6 text-accent" />
+          <div className="theme-panel flex-col items-center rounded-3xl p-4 text-center">
+            <Trophy className="mb-2 size-6 w-full text-accent" />
             <p className="text-xs font-black text-foreground">Top Points</p>
-            <p className="text-[10px] text-muted-foreground">Popular answers earn more points when the host reveals them on the board.</p>
+            <p className="text-faint text-[10px]">
+              Popular answers earn more points when the host reveals them on the
+              board.
+            </p>
           </div>
-          <div className="rounded-3xl bg-card p-4 shadow-glow">
-            <Zap className="mb-2 size-6 text-accent" />
-            <p className="text-xs font-black text-foreground">Batch Submit</p>
-            <p className="text-[10px] text-muted-foreground">Submit every ready question in one request instead of sending them one by one.</p>
+          <div className="theme-panel flex-col justify-items-center rounded-3xl p-4 text-center">
+            <Zap className="mb-2 size-6 w-full text-accent" />
+            <p className="text-xs font-black text-foreground">One Submit</p>
+            <p className="text-faint text-[10px]">
+              Save each question first, then send every saved answer together in
+              one go.
+            </p>
           </div>
         </div>
       </div>
     </main>
-  );
+  )
 }
 
 

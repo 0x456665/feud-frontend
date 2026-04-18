@@ -151,8 +151,22 @@ export default function VotingPage() {
       )
       .map((question) => question.questionId);
 
+    const remainingIncompleteCount = questionsData?.questions.filter(
+      (question) =>
+        !submitted.has(question.questionId) &&
+        !(
+          saved.has(question.questionId) &&
+          (selections[question.questionId]?.size ?? 0) > 0
+        ),
+    ).length;
+
     if (!readyQuestionIds || readyQuestionIds.length === 0) {
       toast.error('Save one or more questions before submitting.');
+      return;
+    }
+
+    if (remainingIncompleteCount && remainingIncompleteCount > 0) {
+      toast.error('Answer and save all questions before submitting.');
       return;
     }
 
@@ -197,6 +211,14 @@ export default function VotingPage() {
         (selections[question.questionId]?.size ?? 0) > 0,
     )
     .map((question) => question.questionId);
+
+  const allQuestionsAnswered = questions.every(
+    (question) =>
+      submitted.has(question.questionId) ||
+      (saved.has(question.questionId) && (selections[question.questionId]?.size ?? 0) > 0),
+  );
+
+  const canSubmitAll = allQuestionsAnswered && readyQuestionIds.length > 0;
 
   if (questions.length === 0) {
     return (
@@ -345,15 +367,18 @@ export default function VotingPage() {
         <div className="mt-4">
           <Button
             className="h-10 w-full text-sm"
-            disabled={readyQuestionIds.length === 0 || isSubmitting}
+            disabled={!canSubmitAll || isSubmitting}
             onClick={handleSubmitReadyQuestions}
           >
             {isSubmitting
               ? "Submitting..."
-              : readyQuestionIds.length === 0
-                ? "Submit Saved Answers"
-                : `Submit ${readyQuestionIds.length} saved ${readyQuestionIds.length === 1 ? "question" : "questions"}`}
+              : `Submit ${readyQuestionIds.length} saved ${readyQuestionIds.length === 1 ? "question" : "questions"}`}
           </Button>
+          {!canSubmitAll && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Answer and save every question before submitting.
+            </p>
+          )}
         </div>
 
         <div className="mt-6 grid grid-cols-2 gap-3">

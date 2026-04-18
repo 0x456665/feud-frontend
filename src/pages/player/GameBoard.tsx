@@ -110,8 +110,8 @@ export default function GameBoard() {
         <div className="mx-auto max-w-3xl px-4 py-16">
           <div className="marquee-frame stage-panel flex flex-col items-center justify-center gap-4 rounded-[2.4rem] px-6 py-16 text-center">
             <Loader2 className="size-12 animate-spin text-primary" />
-            <h2 className="text-3xl font-black text-foreground">Waiting for the game to start…</h2>
-            <p className="max-w-md text-sm leading-6 text-foreground/80">
+            <h2 className="text-3xl font-black text-primary">Waiting for the game to start…</h2>
+            <p className="max-w-md text-sm leading-6 text-primary/10">
               The board is armed and ready. As soon as the host goes live, this page will switch
               into the active round automatically.
             </p>

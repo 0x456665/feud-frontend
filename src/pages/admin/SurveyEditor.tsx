@@ -4,6 +4,7 @@ import { Plus, Loader2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import {
   useAddQuestionMutation,
@@ -277,7 +278,9 @@ export default function SurveyEditor() {
                       <p className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">
                         Question {index + 1}
                       </p>
-                      <Input
+                      <Textarea
+                        rows={4}
+                        className="min-h-20 w-full"
                         value={question.question}
                         onChange={(e) => updateQuestionText(question.id, e.target.value)}
                         placeholder="Type your survey question here..."

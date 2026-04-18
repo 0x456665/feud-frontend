@@ -12,6 +12,7 @@ import type {
   Team,
   EndGameResult,
   Question,
+  Option,
   SurveyVoterCountResponse,
 } from '@/types';
 

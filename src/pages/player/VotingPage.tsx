@@ -63,6 +63,12 @@ export default function VotingPage() {
   }
 
   function handleSaveCurrent(questionId: string) {
+    const selectedOptions = selections[questionId] ?? new Set<string>();
+    if (selectedOptions.size === 0) {
+      toast.error('Select at least one answer before saving.');
+      return;
+    }
+
     setSaved((prev) => {
       const next = new Set(prev);
       next.add(questionId);
@@ -137,7 +143,12 @@ export default function VotingPage() {
 
   async function handleSubmitReadyQuestions() {
     const readyQuestionIds = questionsData?.questions
-      .filter((question) => !submitted.has(question.questionId) && saved.has(question.questionId))
+      .filter(
+        (question) =>
+          !submitted.has(question.questionId) &&
+          saved.has(question.questionId) &&
+          (selections[question.questionId]?.size ?? 0) > 0,
+      )
       .map((question) => question.questionId);
 
     if (!readyQuestionIds || readyQuestionIds.length === 0) {
@@ -180,7 +191,10 @@ export default function VotingPage() {
   const questions = shuffledQuestions;
   const readyQuestionIds = questions
     .filter(
-      (question) => !submitted.has(question.questionId) && saved.has(question.questionId),
+      (question) =>
+        !submitted.has(question.questionId) &&
+        saved.has(question.questionId) &&
+        (selections[question.questionId]?.size ?? 0) > 0,
     )
     .map((question) => question.questionId);
 
@@ -223,7 +237,7 @@ export default function VotingPage() {
     <main className="min-h-[calc(100vh-56px)] bg-background">
       <div className="px-4 pt-6 pb-2 text-center">
         <p className="text-sm font-bold text-accent sm:text-[0.95rem]">
-          Pick up to 3 answers for this question, or skip it.
+          Pick up to 3 answers for this question.
         </p>
       </div>
 
@@ -289,7 +303,8 @@ export default function VotingPage() {
               <button
                 type="button"
                 onClick={() => handleSaveCurrent(currentQuestion.questionId)}
-                className="w-full rounded-3xl border border-border bg-background px-4 py-3.5 text-sm font-black tracking-wider text-foreground uppercase transition hover:border-primary/70"
+                disabled={isSubmitted || selected.size === 0}
+                className="w-full rounded-3xl border border-border bg-background px-4 py-3.5 text-sm font-black tracking-wider text-foreground uppercase transition hover:border-primary/70 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSaved
                   ? "Saved"

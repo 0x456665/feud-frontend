@@ -8,6 +8,7 @@ import {
 import { toast } from 'sonner';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import {
   useGetGameQuery,
@@ -180,7 +181,7 @@ export default function GameLobby() {
                 <h1 className="mt-5 text-3xl font-black tracking-tight text-primary sm:text-4xl">
                 {game.game_name}
               </h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-primary-foreground">
+              <p className="mt-2 max-w-xl text-sm leading-6 text-primary">
                 Share the code, watch audience count climb, close the survey when the room is ready,
                 then switch straight into the live reveal board.
               </p>
@@ -239,6 +240,21 @@ export default function GameLobby() {
                   ))}
                 </div>
               </div>
+            </div>
+          </section>
+          <section className="mb-8">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                onClick={() => navigate(`/admin/game/${gameCode}/survey-edit`)}
+                disabled={game.play_state !== 'LOBBY'}
+              >
+                Edit Survey Questions
+              </Button>
+              {game.play_state !== 'LOBBY' ? (
+                <p className="text-sm text-muted-foreground">
+                  Survey editing is disabled once the game is in progress.
+                </p>
+              ) : null}
             </div>
           </section>
 
@@ -408,9 +424,9 @@ export default function GameLobby() {
                         <p className="text-sm font-semibold text-foreground">
                           &ldquo;{q.question}&rdquo;
                         </p>
-                        <p className="mt-1 text-xs text-foreground/90 uppercase tracking-wide">
+                        {/* <p className="mt-1 text-xs text-foreground/90 uppercase tracking-wide">
                           {q.number_of_options} answers
-                        </p>
+                        </p> */}
                       </div>
                     </div>
                   </div>

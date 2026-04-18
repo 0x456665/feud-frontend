@@ -10,6 +10,7 @@ import GameCreated from '@/pages/admin/GameCreated';
 import AdminAccess from '@/pages/admin/AdminAccess';
 import GameLobby from '@/pages/admin/GameLobby';
 import LiveGame from '@/pages/admin/LiveGame';
+import SurveyEditor from '@/pages/admin/SurveyEditor';
 import JoinGame from '@/pages/player/JoinGame';
 import PlayerGame from '@/pages/player/PlayerGame';
 import VotingPage from '@/pages/player/VotingPage';
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="/admin/access" element={<AdminAccess />} />
           <Route path="/admin/game/:gameCode/created" element={<AdminGuard><GameCreated /></AdminGuard>} />
           <Route path="/admin/game/:gameCode" element={<AdminGuard><GameLobby /></AdminGuard>} />
+          <Route path="/admin/game/:gameCode/survey-edit" element={<AdminGuard><SurveyEditor /></AdminGuard>} />
           <Route path="/admin/game/:gameCode/live" element={<AdminGuard><LiveGame /></AdminGuard>} />
 
           {/* Fallback */}

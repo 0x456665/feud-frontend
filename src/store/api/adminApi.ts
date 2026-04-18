@@ -168,6 +168,66 @@ export const adminApi = createApi({
       providesTags: (_result, _error, gameCode) => [{ type: 'Questions', id: gameCode }],
     }),
 
+    addQuestion: builder.mutation<
+      Question,
+      { gameCode: string; question: string; options: string[]; number_of_options?: number }
+    >({
+      query: ({ gameCode, question, options, number_of_options }) => ({
+        url: `/admin/games/${gameCode}/questions`,
+        method: 'POST',
+        body: { question, options, number_of_options },
+      }),
+      invalidatesTags: (_result, _error, { gameCode }) => [
+        { type: 'Game', id: gameCode },
+        { type: 'Questions', id: gameCode },
+      ],
+    }),
+
+    addOption: builder.mutation<
+      Option,
+      { gameCode: string; questionId: string; option_text: string }
+    >({
+      query: ({ gameCode, questionId, option_text }) => ({
+        url: `/admin/games/${gameCode}/questions/${questionId}/options`,
+        method: 'POST',
+        body: { option_text },
+      }),
+      invalidatesTags: (_result, _error, { gameCode }) => [
+        { type: 'Game', id: gameCode },
+        { type: 'Questions', id: gameCode },
+      ],
+    }),
+
+    updateQuestion: builder.mutation<
+      Question,
+      { gameCode: string; questionId: string; question?: string; number_of_options?: number }
+    >({
+      query: ({ gameCode, questionId, question, number_of_options }) => ({
+        url: `/admin/games/${gameCode}/questions/${questionId}`,
+        method: 'PATCH',
+        body: { question, number_of_options },
+      }),
+      invalidatesTags: (_result, _error, { gameCode }) => [
+        { type: 'Game', id: gameCode },
+        { type: 'Questions', id: gameCode },
+      ],
+    }),
+
+    updateOption: builder.mutation<
+      Option,
+      { gameCode: string; questionId: string; optionId: string; option_text: string }
+    >({
+      query: ({ gameCode, questionId, optionId, option_text }) => ({
+        url: `/admin/games/${gameCode}/questions/${questionId}/options/${optionId}`,
+        method: 'PATCH',
+        body: { option_text },
+      }),
+      invalidatesTags: (_result, _error, { gameCode }) => [
+        { type: 'Game', id: gameCode },
+        { type: 'Questions', id: gameCode },
+      ],
+    }),
+
     // ── POST /admin/games/:gameCode/questions/import ───────────────────────
     // Batch import questions. Atomic — all succeed or all fail.
     importQuestions: builder.mutation<
@@ -202,5 +262,9 @@ export const {
   useEndGameMutation,
   useGetAdminLogQuery,
   useGetQuestionsQuery,
+  useAddQuestionMutation,
+  useAddOptionMutation,
+  useUpdateQuestionMutation,
+  useUpdateOptionMutation,
   useImportQuestionsMutation,
 } = adminApi;

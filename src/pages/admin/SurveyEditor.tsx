@@ -13,7 +13,7 @@ import {
   useUpdateQuestionMutation,
 } from '@/store/api/adminApi';
 import { getErrorMessage } from '@/lib/utils';
-import type { Option, Question } from '@/types';
+import type { Question } from '@/types';
 
 interface OptionDraft {
   id: string;

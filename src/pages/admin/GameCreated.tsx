@@ -29,7 +29,7 @@ function CopyRow({ label, url }: { label: string; url: string }) {
         <button
           type="button"
           onClick={copy}
-          className="flex h-10 w-full shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-colors hover:bg-primary/80 sm:size-9 sm:w-auto"
+          className="flex h-10 w-full shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-colors hover:bg-primary/80 sm:size-9 px-3 sm:w-auto"
         >
           {copied ? <CheckCheck className="size-4" /> : <Copy className="size-4" />}
         </button>
@@ -59,7 +59,7 @@ export default function GameCreated() {
           {/* Header */}
           <div className="mb-8 text-center">
             <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25 sm:size-14">
-              <span className="text-2xl">🎉</span>
+              <img src='/favicon.png' width={50} height={50} alt="Game Icon" />
             </div>
             <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-4xl">
               Game{' '}
@@ -87,7 +87,7 @@ export default function GameCreated() {
                     navigator.clipboard.writeText(adminCode);
                     toast.success('Admin code copied!');
                   }}
-                  className="flex h-10 w-full shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white hover:bg-amber-600 sm:size-10 sm:w-auto"
+                  className="flex h-10 w-full shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white hover:bg-amber-600 sm:size-9 px-3 sm:w-auto"
                 >
                   <Copy className="size-4" />
                 </button>
@@ -166,7 +166,7 @@ export default function GameCreated() {
                   navigator.clipboard.writeText(gameCode);
                   toast.success('Game code copied!');
                 }}
-                className="flex h-10 w-full items-center justify-center rounded-xl bg-primary/10 text-primary hover:bg-primary/20 sm:size-9 sm:w-auto"
+                className="flex h-10 w-full items-center justify-center rounded-xl bg-primary/10 text-primary hover:bg-primary/20 sm:size-9 px-3 sm:w-auto"
               >
                 <Copy className="size-4" />
               </button>

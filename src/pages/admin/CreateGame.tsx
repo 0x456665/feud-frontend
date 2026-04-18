@@ -106,6 +106,13 @@ export default function CreateGame() {
     );
   }
 
+  function addQuestion() {
+    setQuestions((prev) => [
+      ...prev.map((q) => ({ ...q, expanded: false })),
+      makeQuestion(),
+    ]);
+  }
+
   // ── Validation ─────────────────────────────────────────────────────────
 
   function validate(): string | null {
@@ -285,6 +292,21 @@ export default function CreateGame() {
 
             {/* ── QUESTIONS ── */}
             <section className="mb-8">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-base font-bold text-foreground">Survey Questions</h2>
+                  <p className="text-sm text-soft">Add as many questions as you need for your game.</p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="inline-flex items-center gap-2 rounded-full bg-secondary px-4 py-2 font-black text-secondary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] hover:bg-secondary/90"
+                  onClick={addQuestion}
+                >
+                  <Plus className="size-4" />
+                  Add Another Question
+                </Button>
+              </div>
               <div className="space-y-3">
                 {questions.map((q, qIndex) => {
                   const isCurrentRound = q.expanded;

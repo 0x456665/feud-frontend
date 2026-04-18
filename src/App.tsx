@@ -37,7 +37,7 @@ export default function App() {
     <BrowserRouter>
       <div className="flex min-h-screen flex-col bg-background">
         {/* Sonner toast notifications */}
-        <Toaster position="top-right" closeButton />
+        <Toaster position="top-right" richColors theme='light' closeButton />
 
         {/* Top navigation — hidden on full-screen game board */}
         <Navbar />

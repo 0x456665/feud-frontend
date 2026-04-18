@@ -246,7 +246,7 @@ export default function VotingPage() {
           <div className="mb-4 flex items-start justify-between">
             <div>
               <p className="mb-1 text-[10px] font-black tracking-widest text-muted-foreground uppercase">
-                Round {String(safeCurrentIdx + 1).padStart(2, "0")}
+                Question {String(safeCurrentIdx + 1).padStart(2, "0")}
               </p>
               <h2 className="text-xl leading-tight font-black tracking-tight text-foreground sm:text-2xl">
                 &ldquo;

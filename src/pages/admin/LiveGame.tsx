@@ -1,12 +1,14 @@
 import { useState, useCallback, useEffect } from 'react';
+import type { ComponentProps } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import {  X, Plus, Trophy, Loader2, Eye } from 'lucide-react';
+import { Eye, Loader2, Plus, Radio, Trophy, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { AnswerTile } from '@/components/game/AnswerTile';
 import { StrikeMarks } from '@/components/game/StrikeMarks';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
+import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog';
 import {
   useNextQuestionMutation,
   useRevealOptionMutation,
@@ -21,28 +23,19 @@ import { useGameEvents } from '@/hooks/useGameEvents';
 import type { RootState, AppDispatch } from '@/store';
 import type { Team } from '@/types';
 
-/**
- * Admin: Live Game Control page.
- *
- * Hosts the game in real time:
- *   • Next Question — advance rounds
- *   • Reveal Option — flip answer tiles
- *   • Wrong Answer   — record strikes per team
- *   • Add Score      — award points to a team
- *   • End Game       — finish the session
- *
- * Live board state is driven by SSE events (via useGameEvents hook).
- * On reconnect, the admin log snapshot is fetched to restore state.
- */
+interface PendingAction {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  confirmVariant?: ComponentProps<typeof Button>['variant'];
+  action: () => Promise<void>;
+}
+
 export default function LiveGame() {
   const { gameCode = '' } = useParams<{ gameCode: string }>();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
-  const adminCode = useSelector((s: RootState) => s.adminSession.adminCode) ?? '';
-  void adminCode; // passed automatically via RTK Query headers
-
-  // ── Game state from Redux (driven by SSE) ─────────────────────────────
   const {
     teamAName, teamBName,
     teamAScore, teamBScore,
@@ -50,17 +43,17 @@ export default function LiveGame() {
     playState, winner,
   } = useSelector((s: RootState) => s.gameState);
 
-  // ── RTK Query ──────────────────────────────────────────────────────────
   const { data: game } = useGetGameQuery(gameCode);
   const { data: logSnapshot, refetch: refetchLog } = useGetAdminLogQuery(gameCode);
 
   const [nextQuestion, { isLoading: nextLoading }] = useNextQuestionMutation();
   const [revealOption] = useRevealOptionMutation();
-  const [wrongAnswer] = useWrongAnswerMutation();
+  const [wrongAnswer, { isLoading: strikeLoading }] = useWrongAnswerMutation();
   const [addScore, { isLoading: scoreLoading }] = useAddScoreMutation();
   const [endGame, { isLoading: endLoading }] = useEndGameMutation();
 
-  // ── Reconnect handler — rebuild state from server snapshot ────────────
+  const [confirmAction, setConfirmAction] = useState<PendingAction | null>(null);
+
   const handleDisconnect = useCallback(async () => {
     try {
       const log = await refetchLog().unwrap();
@@ -71,7 +64,6 @@ export default function LiveGame() {
     }
   }, [refetchLog, dispatch]);
 
-  // ── Seed team names from game data ────────────────────────────────────
   useEffect(() => {
     if (!game) return;
     if (game.team_a_name === teamAName && game.team_b_name === teamBName) return;
@@ -84,36 +76,41 @@ export default function LiveGame() {
     dispatch(applyBoardSnapshot(logSnapshot));
   }, [dispatch, logSnapshot]);
 
-  // ── SSE connection ─────────────────────────────────────────────────────
   useGameEvents(gameCode, handleDisconnect);
 
-  // ── Local UI state ─────────────────────────────────────────────────────
-  const [confirmedEnd, setConfirmedEnd] = useState(false);
+  const currentQuestionDetails = game?.questions.find((question) => question.id === currentQuestion?.id);
+  const playableOptions = [...(currentQuestionDetails?.options ?? [])]
+    .filter((option) => option.rank !== null)
+    .sort((left, right) => (left.rank ?? 999) - (right.rank ?? 999));
+  const revealedOptionIds = new Set(revealedTiles.map((tile) => tile.optionId));
+  const unrevealedOptions = playableOptions.filter((option) => !revealedOptionIds.has(option.id));
 
-  // ── Derived data ───────────────────────────────────────────────────────
-  // Find the current question's unrevealed options for the reveal buttons
-  const currentQuestionDetails = game?.questions.find(
-    (q) => q.id === currentQuestion?.id,
-  );
-
-  const revealedOptionIds = new Set(revealedTiles.map((t) => t.optionId));
-  const unrevealedOptions = currentQuestionDetails?.options.filter(
-    (o) => !revealedOptionIds.has(o.id),
-  ) ?? [];
-
-  // Build display tiles: revealed data from Redux, blanks for the rest
   const tiles = Array.from(
-    { length: currentQuestion?.totalOptions ?? 0 },
-    (_, i) => {
-      const rank = i + 1;
-      const revealed = revealedTiles.find((t) => t.rank === rank);
+    { length: currentQuestion?.totalOptions ?? playableOptions.length },
+    (_, index) => {
+      const rank = index + 1;
+      const revealed = revealedTiles.find((tile) => tile.rank === rank);
       return { rank, revealed };
     },
   );
 
-  // ── Actions ────────────────────────────────────────────────────────────
+  const loadingAction = nextLoading || strikeLoading || scoreLoading || endLoading;
 
-  async function handleNextQuestion() {
+  function requestConfirmation(action: PendingAction) {
+    setConfirmAction(action);
+  }
+
+  async function handleConfirmAction() {
+    if (!confirmAction) return;
+
+    try {
+      await confirmAction.action();
+    } finally {
+      setConfirmAction(null);
+    }
+  }
+
+  async function runNextQuestion() {
     try {
       await nextQuestion(gameCode).unwrap();
     } catch (err: unknown) {
@@ -129,7 +126,7 @@ export default function LiveGame() {
     }
   }
 
-  async function handleWrongAnswer(team: Team) {
+  async function runWrongAnswer(team: Team) {
     try {
       await wrongAnswer({ gameCode, team }).unwrap();
     } catch (err: unknown) {
@@ -137,13 +134,13 @@ export default function LiveGame() {
     }
   }
 
-  async function handleAddScore(team: Team) {
-    // Award all points from revealed tiles this round
-    const total = revealedTiles.reduce((sum, t) => sum + t.points, 0);
+  async function runAddScore(team: Team) {
+    const total = revealedTiles.reduce((sum, tile) => sum + tile.points, 0);
     if (total === 0) {
-      toast.warning('No points to award — reveal answers first.');
+      toast.warning('No points to award. Reveal answers first.');
       return;
     }
+
     try {
       await addScore({ gameCode, team, points: total }).unwrap();
       toast.success(`${total} pts awarded to ${team === 'TEAM_A' ? teamAName : teamBName}.`);
@@ -152,11 +149,7 @@ export default function LiveGame() {
     }
   }
 
-  async function handleEndGame() {
-    if (!confirmedEnd) {
-      setConfirmedEnd(true);
-      return;
-    }
+  async function runEndGame() {
     try {
       await endGame(gameCode).unwrap();
       toast.success('Game over!');
@@ -166,25 +159,23 @@ export default function LiveGame() {
     }
   }
 
-  // ── Game over ─────────────────────────────────────────────────────────
   if (playState === 'FINISHED' || winner) {
     return (
       <div className="flex min-h-[calc(100vh-56px)] items-center justify-center bg-background">
-        <div className="text-center px-6">
+        <div className="theme-panel-strong w-full max-w-3xl rounded-[2.4rem] px-6 py-10 text-center shadow-glow">
           <Trophy className="mx-auto mb-4 size-16 text-secondary" />
           <h1 className="text-5xl font-black tracking-tight text-foreground">Game Over!</h1>
-          <p className="mt-2 text-foreground/90">
-            Winner: <strong className="text-primary">{winner?.teamName ?? '\u2014'}</strong>
+          <p className="mt-2 text-foreground/80">
+            Winner: <strong className="text-primary">{winner?.teamName ?? '—'}</strong>
           </p>
-          <div className="mt-6 flex justify-center gap-8 text-lg font-bold">
-            <div className="text-center">
-              <div className="text-xs text-foreground/90 uppercase tracking-widest">{teamAName}</div>
-              <div className="text-3xl font-black text-primary">{teamAScore}</div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-[1.75rem] bg-background/80 px-5 py-5">
+              <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{teamAName}</div>
+              <div className="mt-2 text-4xl font-black text-primary">{teamAScore}</div>
             </div>
-            <div className="text-2xl text-foreground/90 self-center">vs</div>
-            <div className="text-center">
-              <div className="text-xs text-foreground/90 uppercase tracking-widest">{teamBName}</div>
-              <div className="text-3xl font-black text-primary">{teamBScore}</div>
+            <div className="rounded-[1.75rem] bg-background/80 px-5 py-5">
+              <div className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{teamBName}</div>
+              <div className="mt-2 text-4xl font-black text-primary">{teamBScore}</div>
             </div>
           </div>
           <Button className="mt-8" onClick={() => navigate('/')}>
@@ -203,230 +194,237 @@ export default function LiveGame() {
         variant="live"
         bottomSlot={
           <div className="space-y-3">
-            <div className="flex items-center gap-2.5 rounded-xl bg-muted p-3">
-              <div className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                A
-              </div>
-              <div className="min-w-0">
-                <p className="truncate text-xs font-semibold text-foreground">Admin User</p>
-                <p className="text-[10px] text-foreground">Session #{gameCode}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleEndGame}
-              disabled={endLoading}
-              className="flex w-full items-center justify-center gap-1.5 rounded-2xl bg-destructive py-3 text-xs font-black uppercase tracking-wider text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition-transform hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-50"
-            >
-              {endLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}
-              {confirmedEnd ? 'Confirm End' : 'End Game'}
-            </button>
-            {confirmedEnd && (
-              <p className="text-center text-[10px] text-destructive">
-                Click again to confirm.
+            <div className="rounded-[1.4rem] bg-muted/60 p-3 text-center">
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">
+                Live Session
               </p>
-            )}
+              <p className="mt-2 text-sm font-bold text-foreground">{gameCode}</p>
+            </div>
+            <Button
+              variant="destructive"
+              className="h-11 w-full rounded-2xl text-xs font-black uppercase tracking-[0.22em]"
+              onClick={() => requestConfirmation({
+                title: 'End the game?',
+                description: 'This finalises the scores and moves every connected board to the end-game state.',
+                confirmLabel: 'End game',
+                confirmVariant: 'destructive',
+                action: runEndGame,
+              })}
+              disabled={endLoading}
+            >
+              End Game
+            </Button>
           </div>
         }
       />
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Top bar */}
-        <div className="flex flex-wrap items-center gap-3 border-b border-border/30 bg-background/90 px-4 py-3 backdrop-blur-sm sm:px-6">
-          <div className="text-sm font-bold text-foreground/90">
-            {currentQuestion ? `Round ${currentQuestion.roundNumber}` : 'No Round Active'}
-          </div>
-          <div className="h-4 w-px bg-border" />
-          <div className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="text-xs font-bold text-red-600 uppercase tracking-wider">
+        <div className="border-b border-border/40 bg-background/90 px-4 py-3 backdrop-blur sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-440 flex-wrap items-center gap-3">
+            <div className="text-sm font-bold text-foreground/90">
+              {currentQuestion ? `Round ${currentQuestion.roundNumber}` : 'No Round Active'}
+            </div>
+            <div className="h-4 w-px bg-border" />
+            <div className="flex items-center gap-1.5 rounded-full bg-destructive px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-white">
+              <Radio className="size-3" />
               Live Status: On Air
-            </span>
-          </div>
-          <div className="ml-auto">
-            <button
-              type="button"
-              onClick={handleNextQuestion}
-              disabled={nextLoading}
-              className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-70"
-            >
-              {nextLoading ? <Loader2 className="size-3.5 animate-spin" /> : null}
-              {currentQuestion ? 'Next Question' : 'Go Live'}
-            </button>
+            </div>
+            <div className="ml-auto">
+              <Button
+                className="rounded-full px-4"
+                onClick={() => requestConfirmation({
+                  title: currentQuestion ? 'Load next question?' : 'Start the first question?',
+                  description: currentQuestion
+                    ? 'This closes the current round and moves the board to the next ranked question.'
+                    : 'This begins the live game board and loads round one for all connected clients.',
+                  confirmLabel: currentQuestion ? 'Next question' : 'Go live',
+                  action: runNextQuestion,
+                })}
+                disabled={nextLoading}
+              >
+                {nextLoading ? <Loader2 className="size-4 animate-spin" /> : null}
+                {currentQuestion ? 'Next Question' : 'Go Live'}
+              </Button>
+            </div>
           </div>
         </div>
 
         <div className="flex flex-1 flex-col overflow-hidden xl:flex-row">
-          {/* Left: Question board */}
-          <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-            <div className="mb-5">
+          <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-440">
               {currentQuestion ? (
                 <>
-                  <div className="mb-2 flex flex-wrap items-center gap-3">
-                    <span className="rounded-full bg-accent/20 px-3 py-1 text-[10px] font-black tracking-widest text-accent uppercase">
-                      Active Question
-                    </span>
-                    <span className="text-sm font-black text-foreground sm:ml-auto">
-                      Total Points On Board{' '}
-                      <span className="text-xl text-primary">
-                        {revealedTiles.reduce((s, t) => s + t.points, 0)}
+                  <div className="marquee-frame theme-panel-strong rounded-[2.4rem] px-6 py-6 shadow-glow">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="rounded-full bg-accent/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-accent">
+                        Active Question
                       </span>
-                    </span>
+                      <span className="text-sm font-black text-foreground sm:ml-auto">
+                        Revealed Points <span className="text-xl text-primary">{revealedTiles.reduce((sum, tile) => sum + tile.points, 0)}</span>
+                      </span>
+                    </div>
+                    <h2 className="mt-4 max-w-5xl text-3xl font-black leading-tight text-foreground sm:text-4xl">
+                      {currentQuestion.text}
+                    </h2>
+                    <div className="mt-4">
+                      <StrikeMarks count={currentStrikes} />
+                    </div>
                   </div>
-                  <h2 className="text-2xl font-black tracking-tight text-foreground">
-                    {currentQuestion.text}
-                  </h2>
-                  <div className="mt-2">
-                    <StrikeMarks count={currentStrikes} />
+
+                  <div className="mt-6 grid gap-4 xl:grid-cols-2">
+                    {tiles.map(({ rank, revealed }) => (
+                      <AnswerTile
+                        key={rank}
+                        rank={rank}
+                        revealed={!!revealed}
+                        optionText={revealed?.optionText}
+                        points={revealed?.points}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="mt-6 rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-glow">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Eye className="size-4 text-primary" />
+                      <p className="text-sm font-black text-foreground">Reveal Top Answers</p>
+                    </div>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      Only ranked board answers appear here. Zero-vote or overflow answers stay off the live board.
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2.5">
+                      {unrevealedOptions.length > 0 ? unrevealedOptions.map((option) => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => void handleReveal(option.id)}
+                          className="flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary/40 hover:bg-muted"
+                        >
+                          <span className="flex size-6 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground">
+                            {option.rank}
+                          </span>
+                          {option.option_text}
+                        </button>
+                      )) : (
+                        <p className="text-sm text-muted-foreground">All top answers are already revealed.</p>
+                      )}
+                    </div>
                   </div>
                 </>
               ) : (
-                <div className="rounded-2xl bg-muted p-6 text-center text-foreground">
-                  <p className="font-medium">No question loaded.</p>
-                  <p className="text-sm">Click “Go Live” to begin.</p>
+                <div className="marquee-frame theme-panel-strong flex min-h-88 flex-col items-center justify-center rounded-[2.4rem] px-6 py-16 text-center shadow-glow">
+                  <Loader2 className="size-12 animate-spin text-primary" />
+                  <h2 className="mt-5 text-3xl font-black text-foreground">No question loaded</h2>
+                  <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                    Start the first round to push the opening question to every connected board.
+                  </p>
                 </div>
               )}
             </div>
-
-            {tiles.length > 0 && (
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {tiles.map(({ rank, revealed }) => {
-                  const unrevOption = currentQuestionDetails?.options.find(
-                    (o) => o.rank === rank && !revealedOptionIds.has(o.id),
-                  );
-                  return (
-                    <div key={rank} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4">
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-black text-primary">
-                        {rank}
-                      </span>
-                      {revealed ? (
-                        <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-foreground truncate">{revealed.optionText}</p>
-                          <p className="text-xs text-foreground/90">{revealed.points} Points</p>
-                        </div>
-                      ) : (
-                        <div className="flex-1 min-w-0 text-sm text-foreground/90 italic">Hidden</div>
-                      )}
-                      {revealed ? (
-                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-bold text-green-700 uppercase">
-                          Revealed
-                        </span>
-                      ) : unrevOption ? (
-                        <button
-                          type="button"
-                          onClick={() => handleReveal(unrevOption.id)}
-                          className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold text-primary-foreground uppercase hover:bg-primary/90"
-                        >
-                          Reveal
-                        </button>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Hidden AnswerTile components keep SSE-powered board state working */}
-            <div className="hidden">
-              {tiles.map(({ rank, revealed }) => (
-                <AnswerTile
-                  key={rank}
-                  rank={rank}
-                  revealed={!!revealed}
-                  optionText={revealed?.optionText}
-                  points={revealed?.points}
-                />
-              ))}
-            </div>
-
-            {unrevealedOptions.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {unrevealedOptions.map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => handleReveal(opt.id)}
-                    className="flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors"
-                  >
-                    <Eye className="size-3 text-primary" />
-                    {opt.option_text}
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* Right: Controls */}
-          <div className="w-full shrink-0 overflow-y-auto border-t border-border/30 p-4 space-y-4 xl:w-64 xl:border-t-0 xl:border-l">
-            {/* Team Scores */}
-            <div className="rounded-[2rem] bg-card p-4 shadow-glow">
-              <p className="mb-3 text-[10px] font-black tracking-widest text-foreground uppercase">
-                Team Scores
-              </p>
-              <div className="space-y-3">
-                {(
-                  [
-                    { name: teamAName, score: teamAScore, team: 'TEAM_A' as Team, isPrimary: true },
-                    { name: teamBName, score: teamBScore, team: 'TEAM_B' as Team, isPrimary: false },
-                  ] as const
-                ).map(({ name, score, team, isPrimary }) => (
-                  <div key={team} className="rounded-xl bg-card p-3 shadow-glow">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-foreground/90">
-                        {name || team}
-                      </span>
-                      <span className="text-xl font-black text-foreground">{score}</span>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleAddScore(team)}
-                        disabled={scoreLoading || !currentQuestion}
-                        className={`flex flex-1 items-center justify-center rounded-xl py-1.5 text-sm font-black text-white transition-colors disabled:opacity-50 ${isPrimary ? 'bg-primary hover:bg-primary/90' : 'bg-accent hover:bg-accent/90'}`}
-                      >
-                        <Plus className="size-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleWrongAnswer(team)}
-                        disabled={!currentQuestion}
-                        className="flex flex-1 items-center justify-center rounded-xl bg-muted-foreground/20 py-1.5 text-sm font-black text-foreground hover:bg-muted-foreground/30 transition-colors disabled:opacity-50"
-                      >
-                        <X className="size-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+          <div className="w-full shrink-0 overflow-y-auto border-t border-border/30 bg-background/70 p-4 backdrop-blur xl:w-80 xl:border-l xl:border-t-0 xl:p-6">
+            <div className="space-y-4">
+              <div className="rounded-[2rem] border border-border/70 bg-card/90 p-4 shadow-glow">
+                <p className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">
+                  Team Scores
+                </p>
+                <div className="space-y-3">
+                  {(
+                    [
+                      { name: teamAName, score: teamAScore, team: 'TEAM_A' as Team, actionTone: 'primary' },
+                      { name: teamBName, score: teamBScore, team: 'TEAM_B' as Team, actionTone: 'accent' },
+                    ] as const
+                  ).map(({ name, score, team, actionTone }) => {
+                    const scoreToAdd = revealedTiles.reduce((sum, tile) => sum + tile.points, 0);
+                    return (
+                      <div key={team} className="rounded-[1.4rem] bg-background/80 p-4">
+                        <div className="mb-3 flex items-center justify-between gap-3">
+                          <span className="text-xs font-black uppercase tracking-[0.18em] text-foreground/85">
+                            {name || team}
+                          </span>
+                          <span className="text-2xl font-black text-foreground">{score}</span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant="default"
+                            className={actionTone === 'accent' ? 'bg-accent text-accent-foreground hover:bg-accent/85' : ''}
+                            onClick={() => requestConfirmation({
+                              title: `Award ${name || team} this round?`,
+                              description: scoreToAdd > 0
+                                ? `${scoreToAdd} points from the revealed answers will be added to ${name || team}.`
+                                : 'There are no revealed points yet, so this action will not award any score.',
+                              confirmLabel: 'Add score',
+                              action: () => runAddScore(team),
+                            })}
+                            disabled={scoreLoading || !currentQuestion}
+                          >
+                            <Plus className="size-4" />
+                            Add Score
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => requestConfirmation({
+                              title: `Add a strike to ${name || team}?`,
+                              description: 'This will increment the visible strike counter on every connected board.',
+                              confirmLabel: 'Add strike',
+                              confirmVariant: 'destructive',
+                              action: () => runWrongAnswer(team),
+                            })}
+                            disabled={strikeLoading || !currentQuestion}
+                          >
+                            <X className="size-4" />
+                            Strike
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
 
-            {/* Strikes */}
-            <div className="rounded-2xl bg-card shadow-glow p-4">
-              <p className="mb-3 text-[10px] font-black tracking-widest text-foreground uppercase">
-                Current Strikes
-              </p>
-              <StrikeMarks count={currentStrikes} className="justify-center" />
-              <p className="mt-3 text-[10px] text-foreground/90 text-center">
-                Pressing X adds a strike on board.
-              </p>
-            </div>
+              <div className="rounded-[2rem] border border-border/70 bg-card/90 p-4 shadow-glow">
+                <p className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">
+                  Current Strikes
+                </p>
+                <StrikeMarks count={currentStrikes} className="justify-center" />
+                <p className="mt-3 text-center text-xs text-muted-foreground">
+                  Strike actions are confirmed before they appear on the live board.
+                </p>
+              </div>
 
-            {/* Next Question */}
-            <button
-              type="button"
-              onClick={handleNextQuestion}
-              disabled={nextLoading}
-              className="w-full rounded-2xl bg-secondary py-4 text-sm font-black uppercase tracking-wider text-secondary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition-transform hover:scale-105 active:scale-95 disabled:scale-100 disabled:opacity-50"
-            >
-              {nextLoading ? (
-                <Loader2 className="mx-auto size-5 animate-spin" />
-              ) : (
-                'Next Question'
-              )}
-            </button>
+              <Button
+                variant="secondary"
+                className="h-12 w-full rounded-2xl text-sm font-black uppercase tracking-[0.22em]"
+                onClick={() => requestConfirmation({
+                  title: currentQuestion ? 'Move to the next question?' : 'Start round one?',
+                  description: currentQuestion
+                    ? 'This closes the current round and advances the board to the next ranked question.'
+                    : 'This starts the first live round for all connected clients.',
+                  confirmLabel: currentQuestion ? 'Next question' : 'Start round',
+                  action: runNextQuestion,
+                })}
+                disabled={nextLoading}
+              >
+                {nextLoading ? <Loader2 className="size-4 animate-spin" /> : null}
+                {currentQuestion ? 'Next Question' : 'Start Round'}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
+
+      <ConfirmActionDialog
+        open={!!confirmAction}
+        title={confirmAction?.title ?? ''}
+        description={confirmAction?.description ?? ''}
+        confirmLabel={confirmAction?.confirmLabel}
+        confirmVariant={confirmAction?.confirmVariant}
+        isLoading={loadingAction}
+        onConfirm={() => void handleConfirmAction()}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+      />
     </div>
   );
 }

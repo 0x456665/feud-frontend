@@ -16,17 +16,19 @@ export function TeamScoreCard({ teamName, score, isActive, className }: TeamScor
   return (
     <div
       className={cn(
-        'flex flex-col items-center justify-center rounded-[2rem] p-6 transition-all duration-300 shadow-glow',
+        'flex flex-col items-center justify-center rounded-[2.2rem] border p-6 text-center transition-all duration-300 shadow-glow sm:p-8',
         isActive
-          ? 'bg-gradient-primary text-primary-foreground scale-105'
-          : 'bg-card text-foreground',
+          ? 'theme-inverse-panel scale-[1.02] border-white/20 text-primary-foreground'
+          : 'theme-panel-strong border-border/70 text-foreground',
         className,
       )}
     >
-      <span className={cn('text-[10px] font-black uppercase tracking-widest', isActive ? 'text-white/70' : 'text-muted-foreground')}>
+      <span className={cn('text-[11px] font-black uppercase tracking-[0.24em]', isActive ? 'text-white/78' : 'text-muted-foreground')}>
         {teamName}
       </span>
-      <span className={cn('mt-2 text-5xl font-black tabular-nums', isActive ? 'text-white' : 'text-primary')}>{score}</span>
+      <span className={cn('mt-3 text-6xl font-black tabular-nums sm:text-7xl', isActive ? 'text-white' : 'text-primary')}>
+        {score}
+      </span>
     </div>
   );
 }

@@ -136,6 +136,12 @@ export interface CreateGamePayload {
   }>;
 }
 
+export interface UpdateGamePayload {
+  game_name?: string;
+  team_a_name?: string;
+  team_b_name?: string;
+}
+
 export interface CreateGameResponse {
   message: string;
   game_code: string;

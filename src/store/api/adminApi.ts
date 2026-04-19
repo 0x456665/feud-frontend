@@ -8,6 +8,7 @@ import type {
   SurveyQuestionStat,
   CreateGamePayload,
   CreateGameResponse,
+  UpdateGamePayload,
   VotingState,
   Team,
   EndGameResult,
@@ -59,11 +60,33 @@ export const adminApi = createApi({
       }),
     }),
 
+    duplicateGame: builder.mutation<
+      CreateGameResponse,
+      { gameCode: string; updates?: UpdateGamePayload }
+    >({
+      query: ({ gameCode, updates }) => ({
+        url: `/admin/games/${gameCode}/duplicate`,
+        method: 'POST',
+        body: updates,
+      }),
+    }),
+
     // ── GET /admin/games/:gameCode ─────────────────────────────────────────
     // Full game detail including all questions and options.
     getGame: builder.query<Game, string>({
       query: (gameCode) => `/admin/games/${gameCode}`,
       providesTags: (_result, _error, gameCode) => [{ type: 'Game', id: gameCode }],
+    }),
+
+    updateGame: builder.mutation<Game, { gameCode: string; updates: UpdateGamePayload }>({
+      query: ({ gameCode, updates }) => ({
+        url: `/admin/games/${gameCode}`,
+        method: 'PATCH',
+        body: updates,
+      }),
+      invalidatesTags: (_result, _error, { gameCode }) => [
+        { type: 'Game', id: gameCode },
+      ],
     }),
 
     // ── GET /admin/games/:gameCode/survey-stats ────────────────────────────
@@ -250,8 +273,10 @@ export const adminApi = createApi({
 
 export const {
   useCreateGameMutation,
+  useDuplicateGameMutation,
   useGetGameQuery,
   useLazyGetGameQuery,
+  useUpdateGameMutation,
   useGetSurveyStatsQuery,
   useGetSurveyVoterCountQuery,
   useSetVotingStateMutation,

@@ -187,6 +187,8 @@ export default function GameLobby() {
   }
 
   function openDuplicateDialog() {
+    if (!game) return;
+
     setDuplicateDraft({
       gameName: `${game.game_name} (Copy)`,
       teamAName: game.team_a_name,

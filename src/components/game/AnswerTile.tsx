@@ -22,31 +22,31 @@ interface AnswerTileProps {
  */
 export function AnswerTile({ rank, optionText, points, revealed, className }: AnswerTileProps) {
   return (
-    <div className={cn('answer-tile relative h-full min-h-0 w-full perspective-800', revealed && 'is-flipped', className)}>
+    <div className={cn('answer-tile relative h-full w-full overflow-hidden perspective-800', revealed && 'is-flipped', className)}>
       <div className="answer-tile-inner relative h-full w-full transition-transform duration-500 ease-out">
-        <div className="answer-tile-face answer-tile-front absolute inset-0 flex items-center justify-between gap-2 overflow-hidden rounded-[1.35rem] border border-border/70 bg-card/95 px-3 py-2 text-sm font-black tracking-[0.16em] text-foreground shadow-[0_18px_40px_rgba(36,26,56,0.12)] backdrop-blur-sm sm:rounded-[1.55rem] sm:px-4">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground shadow-sm sm:size-9 sm:text-sm">
+        <div className="answer-tile-face answer-tile-front absolute inset-0 flex items-center justify-between gap-[3%] overflow-hidden rounded-[1.2rem] border border-border/70 bg-card/95 px-[4%] py-[5%] text-sm font-black tracking-[0.16em] text-foreground shadow-[0_18px_40px_rgba(36,26,56,0.12)] backdrop-blur-sm sm:rounded-[1.45rem]">
+          <span className="flex aspect-square w-[12%] min-w-8 max-w-11 shrink-0 items-center justify-center rounded-full bg-primary text-[clamp(0.72rem,0.95vw,0.95rem)] font-black text-primary-foreground shadow-sm">
             {rank}
           </span>
-          <span className="mx-1 flex-1 text-center text-[10px] uppercase tracking-[0.18em] text-foreground/40 sm:mx-2 sm:text-xs sm:tracking-[0.22em]">
+          <span className="flex-1 text-center text-[clamp(0.55rem,0.82vw,0.82rem)] uppercase tracking-[0.18em] text-foreground/40 sm:tracking-[0.22em]">
             Top answer hidden
           </span>
-          <span className="min-w-8 sm:min-w-10" />
+          <span className="w-[12%] min-w-8 max-w-11 shrink-0" />
         </div>
 
-        <div className="answer-tile-face answer-tile-back theme-inverse-panel absolute inset-0 flex items-center justify-between gap-2 overflow-hidden rounded-[1.35rem] px-3 py-2 text-sm font-black shadow-[0_24px_60px_rgba(36,26,56,0.24)] sm:rounded-[1.55rem] sm:px-4">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/18 text-xs font-black text-white shadow-sm sm:size-9 sm:text-sm">
+        <div className="answer-tile-face answer-tile-back theme-inverse-panel absolute inset-0 flex items-center justify-between gap-[3%] overflow-hidden rounded-[1.2rem] px-[4%] py-[5%] text-sm font-black shadow-[0_24px_60px_rgba(36,26,56,0.24)] sm:rounded-[1.45rem]">
+          <span className="flex aspect-square w-[12%] min-w-8 max-w-11 shrink-0 items-center justify-center rounded-full bg-white/18 text-[clamp(0.72rem,0.95vw,0.95rem)] font-black text-white shadow-sm">
             {rank}
           </span>
-          <span className="mx-1 flex-1 text-center text-sm font-black leading-tight tracking-[0.04em] text-white opacity-0 animate-answer-text-fade sm:mx-2 sm:text-base lg:text-lg">
+          <span className="flex-1 text-center text-[clamp(0.82rem,1.2vw,1.18rem)] font-black leading-tight tracking-[0.03em] text-white opacity-0 animate-answer-text-fade">
             {optionText}
           </span>
           {points !== undefined ? (
-            <span className="flex min-w-10 items-center justify-center rounded-full bg-secondary px-2.5 py-1 text-sm font-black text-secondary-foreground shadow-sm sm:min-w-12 sm:px-3 sm:py-1.5 sm:text-base">
+            <span className="flex min-w-[14%] items-center justify-center rounded-full bg-secondary px-[4%] py-[3%] text-[clamp(0.82rem,1.1vw,1.05rem)] font-black text-secondary-foreground shadow-sm">
               {points}
             </span>
           ) : (
-            <span className="min-w-10 sm:min-w-12" />
+            <span className="min-w-[14%]" />
           )}
         </div>
       </div>

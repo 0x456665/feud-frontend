@@ -10,6 +10,7 @@ import { StrikeMarks } from '@/components/game/StrikeMarks';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
 import { ConfirmActionDialog } from '@/components/ui/confirm-action-dialog';
 import {
+  useStartGameMutation,
   useNextQuestionMutation,
   useRevealOptionMutation,
   useWrongAnswerMutation,
@@ -46,6 +47,7 @@ export default function LiveGame() {
   const { data: game } = useGetGameQuery(gameCode);
   const { data: logSnapshot, refetch: refetchLog } = useGetAdminLogQuery(gameCode);
 
+  const [startGame, { isLoading: startLoading }] = useStartGameMutation();
   const [nextQuestion, { isLoading: nextLoading }] = useNextQuestionMutation();
   const [revealOption] = useRevealOptionMutation();
   const [wrongAnswer, { isLoading: strikeLoading }] = useWrongAnswerMutation();
@@ -94,10 +96,10 @@ export default function LiveGame() {
     },
   );
   const tileColumns = tiles.length > 3 ? 2 : 1;
-  const tileRows = Math.max(1, Math.ceil(Math.max(tiles.length, 1) / tileColumns));
   const revealedPoints = revealedTiles.reduce((sum, tile) => sum + tile.points, 0);
+  const gameStarted = game?.play_state === 'IN_PROGRESS';
 
-  const loadingAction = nextLoading || strikeLoading || scoreLoading || endLoading;
+  const loadingAction = startLoading || nextLoading || strikeLoading || scoreLoading || endLoading;
 
   function requestConfirmation(action: PendingAction) {
     setConfirmAction(action);
@@ -115,6 +117,15 @@ export default function LiveGame() {
 
   async function runNextQuestion() {
     try {
+      if (!gameStarted) {
+        if (game?.voting_state !== 'CLOSED') {
+          toast.error('Close voting before starting the live game.');
+          return;
+        }
+
+        await startGame(gameCode).unwrap();
+      }
+
       await nextQuestion(gameCode).unwrap();
     } catch (err: unknown) {
       toast.error((err as { message?: string })?.message ?? 'Could not advance question.');
@@ -164,7 +175,7 @@ export default function LiveGame() {
 
   if (playState === 'FINISHED' || winner) {
     return (
-      <div className="flex h-[100svh] items-center justify-center bg-background">
+      <div className="flex h-svh items-center justify-center bg-background">
         <div className="theme-panel-strong w-full max-w-3xl rounded-[2.4rem] px-6 py-10 text-center shadow-glow">
           <Trophy className="mx-auto mb-4 size-16 text-secondary" />
           <h1 className="text-5xl font-black tracking-tight text-foreground">Game Over!</h1>
@@ -190,7 +201,7 @@ export default function LiveGame() {
   }
 
   return (
-    <div className="flex h-[100svh] overflow-hidden bg-background">
+    <div className="flex h-svh overflow-hidden bg-background">
       <AdminSidebar
         gameCode={gameCode}
         active="live"
@@ -236,17 +247,19 @@ export default function LiveGame() {
               <Button
                 className="rounded-full px-4"
                 onClick={() => requestConfirmation({
-                  title: currentQuestion ? 'Load next question?' : 'Start the first question?',
+                  title: currentQuestion ? 'Load next question?' : gameStarted ? 'Load round one?' : 'Start live game?',
                   description: currentQuestion
                     ? 'This closes the current round and moves the board to the next ranked question.'
-                    : 'This begins the live game board and loads round one for all connected clients.',
-                  confirmLabel: currentQuestion ? 'Next question' : 'Go live',
+                    : gameStarted
+                      ? 'This loads the first ranked question for all connected clients.'
+                      : 'This starts the live game and immediately loads round one for all connected clients.',
+                  confirmLabel: currentQuestion ? 'Next question' : gameStarted ? 'Load round one' : 'Start live game',
                   action: runNextQuestion,
                 })}
-                disabled={nextLoading}
+                disabled={startLoading || nextLoading}
               >
-                {nextLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-                {currentQuestion ? 'Next Question' : 'Go Live'}
+                {startLoading || nextLoading ? <Loader2 className="size-4 animate-spin" /> : null}
+                {currentQuestion ? 'Next Question' : gameStarted ? 'Load Round 1' : 'Start Live Game'}
               </Button>
             </div>
           </div>
@@ -276,10 +289,9 @@ export default function LiveGame() {
 
                   <div className="mt-4 min-h-0 flex-1">
                     <div
-                      className="grid h-full min-h-0 gap-3"
+                      className="grid gap-3"
                       style={{
                         gridTemplateColumns: `repeat(${tileColumns}, minmax(0, 1fr))`,
-                        gridTemplateRows: `repeat(${tileRows}, minmax(0, 1fr))`,
                       }}
                     >
                       {tiles.map(({ rank, revealed }) => (
@@ -289,7 +301,7 @@ export default function LiveGame() {
                           revealed={!!revealed}
                           optionText={revealed?.optionText}
                           points={revealed?.points}
-                          className="min-h-[4.75rem] sm:min-h-[5.25rem]"
+                          className="aspect-[8/1.7] min-h-0"
                         />
                       ))}
                     </div>
@@ -408,17 +420,19 @@ export default function LiveGame() {
                 variant="secondary"
                 className="h-12 w-full rounded-2xl text-sm font-black uppercase tracking-[0.22em]"
                 onClick={() => requestConfirmation({
-                  title: currentQuestion ? 'Move to the next question?' : 'Start round one?',
+                  title: currentQuestion ? 'Move to the next question?' : gameStarted ? 'Start round one?' : 'Start live game?',
                   description: currentQuestion
                     ? 'This closes the current round and advances the board to the next ranked question.'
-                    : 'This starts the first live round for all connected clients.',
-                  confirmLabel: currentQuestion ? 'Next question' : 'Start round',
+                    : gameStarted
+                      ? 'This starts the first live round for all connected clients.'
+                      : 'This starts the live game and opens round one for all connected clients.',
+                  confirmLabel: currentQuestion ? 'Next question' : gameStarted ? 'Start round' : 'Start live game',
                   action: runNextQuestion,
                 })}
-                disabled={nextLoading}
+                disabled={startLoading || nextLoading}
               >
-                {nextLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-                {currentQuestion ? 'Next Question' : 'Start Round'}
+                {startLoading || nextLoading ? <Loader2 className="size-4 animate-spin" /> : null}
+                {currentQuestion ? 'Next Question' : gameStarted ? 'Start Round' : 'Start Live Game'}
               </Button>
             </div>
           </div>

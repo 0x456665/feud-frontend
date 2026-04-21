@@ -52,6 +52,7 @@
 :root {
     /* The Electric Stage Theme */
     color-scheme: light;
+    --app-header-height: 3.5rem;
     --background: #fff8fc;
     --foreground: #2f1f3d;
     --card: #ffffff;
@@ -148,9 +149,15 @@
 }
 
 body {
+    min-height: 100svh;
     background-color: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
+    overflow-x: hidden;
+}
+
+#root {
+    min-height: 100svh;
 }
 
 h1, h2, h3, h4, h5, h6, .display-font {

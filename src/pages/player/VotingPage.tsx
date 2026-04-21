@@ -1,12 +1,17 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { Loader2, AlertCircle, Trophy, Zap, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
   useGetPublicQuestionsQuery,
   useCastVoteMutation,
+  useGetBoardQuery,
 } from '@/store/api/playerApi';
+import { useGameEvents } from '@/hooks/useGameEvents';
+import { applyBoardSnapshot } from '@/store/slices/gameStateSlice';
+import type { RootState, AppDispatch } from '@/store';
 import { getErrorMessage } from '@/lib/utils';
 
 function shuffleArray<T>(items: T[]) {
@@ -23,12 +28,15 @@ function shuffleArray<T>(items: T[]) {
 export default function VotingPage() {
   const { gameCode = '' } = useParams<{ gameCode: string }>();
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const { playState, votingState } = useSelector((state: RootState) => state.gameState);
 
   const {
     data: questionsData,
     isLoading: questionsLoading,
     isError,
   } = useGetPublicQuestionsQuery(gameCode);
+  const { data: board, refetch: refetchBoard } = useGetBoardQuery(gameCode);
   const [castVote] = useCastVoteMutation();
 
   const [selections, setSelections] = useState<Record<string, Set<string>>>({});
@@ -46,6 +54,38 @@ export default function VotingPage() {
         : [],
     [questionsData],
   );
+
+  useEffect(() => {
+    if (!board) return;
+    dispatch(applyBoardSnapshot(board));
+  }, [board, dispatch]);
+
+  const handleDisconnect = useCallback(async () => {
+    try {
+      const snapshot = await refetchBoard().unwrap();
+      dispatch(applyBoardSnapshot(snapshot));
+    } catch {
+      // Let the SSE hook keep retrying in the background.
+    }
+  }, [dispatch, refetchBoard]);
+
+  useGameEvents(gameCode, handleDisconnect);
+
+  useEffect(() => {
+    if (playState === 'IN_PROGRESS') {
+      navigate(`/game/${gameCode}/board`, { replace: true });
+      return;
+    }
+
+    if (playState === 'FINISHED') {
+      navigate(`/game/${gameCode}/end`, { replace: true });
+      return;
+    }
+
+    if (votingState === 'CLOSED') {
+      navigate(`/game/${gameCode}`, { replace: true });
+    }
+  }, [gameCode, navigate, playState, votingState]);
 
   function toggleOption(questionId: string, optionId: string) {
     setSelections((prev) => {

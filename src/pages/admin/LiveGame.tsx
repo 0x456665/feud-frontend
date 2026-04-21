@@ -93,6 +93,9 @@ export default function LiveGame() {
       return { rank, revealed };
     },
   );
+  const tileColumns = tiles.length > 3 ? 2 : 1;
+  const tileRows = Math.max(1, Math.ceil(Math.max(tiles.length, 1) / tileColumns));
+  const revealedPoints = revealedTiles.reduce((sum, tile) => sum + tile.points, 0);
 
   const loadingAction = nextLoading || strikeLoading || scoreLoading || endLoading;
 
@@ -161,7 +164,7 @@ export default function LiveGame() {
 
   if (playState === 'FINISHED' || winner) {
     return (
-      <div className="flex min-h-[calc(100vh-56px)] items-center justify-center bg-background">
+      <div className="flex h-[100svh] items-center justify-center bg-background">
         <div className="theme-panel-strong w-full max-w-3xl rounded-[2.4rem] px-6 py-10 text-center shadow-glow">
           <Trophy className="mx-auto mb-4 size-16 text-secondary" />
           <h1 className="text-5xl font-black tracking-tight text-foreground">Game Over!</h1>
@@ -187,7 +190,7 @@ export default function LiveGame() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-56px)] overflow-x-hidden bg-background">
+    <div className="flex h-[100svh] overflow-hidden bg-background">
       <AdminSidebar
         gameCode={gameCode}
         active="live"
@@ -218,8 +221,8 @@ export default function LiveGame() {
         }
       />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <div className="border-b border-border/40 bg-background/90 px-4 py-3 backdrop-blur sm:px-6 lg:px-8">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="shrink-0 border-b border-border/40 bg-background/90 px-4 py-3 backdrop-blur sm:px-6 lg:px-8">
           <div className="mx-auto flex max-w-440 flex-wrap items-center gap-3">
             <div className="text-sm font-bold text-foreground/90">
               {currentQuestion ? `Round ${currentQuestion.roundNumber}` : 'No Round Active'}
@@ -249,55 +252,64 @@ export default function LiveGame() {
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col overflow-hidden xl:flex-row">
-          <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-440">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden xl:flex-row">
+          <div className="flex min-h-0 flex-1 flex-col px-4 py-4 sm:px-6 lg:px-8">
+            <div className="mx-auto flex min-h-0 w-full max-w-440 flex-1 flex-col">
               {currentQuestion ? (
                 <>
-                  <div className="marquee-frame theme-panel-strong rounded-[2.4rem] px-6 py-6 shadow-glow">
+                  <div className="marquee-frame theme-panel-strong shrink-0 rounded-[2rem] px-4 py-4 shadow-glow sm:px-5 sm:py-5">
                     <div className="flex flex-wrap items-center gap-3">
                       <span className="rounded-full bg-accent/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-accent">
                         Active Question
                       </span>
                       <span className="text-sm font-black text-foreground sm:ml-auto">
-                        Revealed Points <span className="text-xl text-primary">{revealedTiles.reduce((sum, tile) => sum + tile.points, 0)}</span>
+                        Revealed Points <span className="text-xl text-primary">{revealedPoints}</span>
                       </span>
                     </div>
-                    <h2 className="mt-4 max-w-5xl text-3xl font-black leading-tight text-foreground sm:text-4xl">
+                    <h2 className="mt-3 max-w-5xl text-2xl font-black leading-tight text-foreground sm:text-3xl lg:text-[2.4rem]">
                       {currentQuestion.text}
                     </h2>
-                    <div className="mt-4">
+                    <div className="mt-3">
                       <StrikeMarks count={currentStrikes} />
                     </div>
                   </div>
 
-                  <div className="mt-6 grid gap-4 xl:grid-cols-2">
-                    {tiles.map(({ rank, revealed }) => (
-                      <AnswerTile
-                        key={rank}
-                        rank={rank}
-                        revealed={!!revealed}
-                        optionText={revealed?.optionText}
-                        points={revealed?.points}
-                      />
-                    ))}
+                  <div className="mt-4 min-h-0 flex-1">
+                    <div
+                      className="grid h-full min-h-0 gap-3"
+                      style={{
+                        gridTemplateColumns: `repeat(${tileColumns}, minmax(0, 1fr))`,
+                        gridTemplateRows: `repeat(${tileRows}, minmax(0, 1fr))`,
+                      }}
+                    >
+                      {tiles.map(({ rank, revealed }) => (
+                        <AnswerTile
+                          key={rank}
+                          rank={rank}
+                          revealed={!!revealed}
+                          optionText={revealed?.optionText}
+                          points={revealed?.points}
+                          className="min-h-[4.75rem] sm:min-h-[5.25rem]"
+                        />
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="mt-6 rounded-[2rem] border border-border/70 bg-card/90 p-5 shadow-glow">
+                  <div className="mt-4 shrink-0 rounded-[1.7rem] border border-border/70 bg-card/90 p-4 shadow-glow sm:rounded-[2rem] sm:p-5">
                     <div className="flex flex-wrap items-center gap-2">
                       <Eye className="size-4 text-primary" />
                       <p className="text-sm font-black text-foreground">Reveal Top Answers</p>
                     </div>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground sm:text-sm sm:leading-6">
                       Only ranked board answers appear here. Zero-vote or overflow answers stay off the live board.
                     </p>
-                    <div className="mt-4 flex flex-wrap gap-2.5">
+                    <div className="mt-3 flex flex-wrap gap-2">
                       {unrevealedOptions.length > 0 ? unrevealedOptions.map((option) => (
                         <button
                           key={option.id}
                           type="button"
                           onClick={() => void handleReveal(option.id)}
-                          className="flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary/40 hover:bg-muted"
+                          className="flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground shadow-sm transition hover:border-primary/40 hover:bg-muted sm:px-4 sm:py-2 sm:text-sm"
                         >
                           <span className="flex size-6 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground">
                             {option.rank}
@@ -311,7 +323,7 @@ export default function LiveGame() {
                   </div>
                 </>
               ) : (
-                <div className="marquee-frame theme-panel-strong flex min-h-88 flex-col items-center justify-center rounded-[2.4rem] px-6 py-16 text-center shadow-glow">
+                <div className="marquee-frame theme-panel-strong flex min-h-0 flex-1 flex-col items-center justify-center rounded-[2.1rem] px-6 py-12 text-center shadow-glow">
                   <Loader2 className="size-12 animate-spin text-primary" />
                   <h2 className="mt-5 text-3xl font-black text-foreground">No question loaded</h2>
                   <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
@@ -322,7 +334,7 @@ export default function LiveGame() {
             </div>
           </div>
 
-          <div className="w-full shrink-0 overflow-y-auto border-t border-border/30 bg-background/70 p-4 backdrop-blur xl:w-80 xl:border-l xl:border-t-0 xl:p-6">
+          <div className="w-full shrink-0 overflow-y-auto border-t border-border/30 bg-background/70 p-4 backdrop-blur xl:w-80 xl:border-l xl:border-t-0 xl:p-5">
             <div className="space-y-4">
               <div className="rounded-[2rem] border border-border/70 bg-card/90 p-4 shadow-glow">
                 <p className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-muted-foreground">
@@ -335,7 +347,7 @@ export default function LiveGame() {
                       { name: teamBName, score: teamBScore, team: 'TEAM_B' as Team, actionTone: 'accent' },
                     ] as const
                   ).map(({ name, score, team, actionTone }) => {
-                    const scoreToAdd = revealedTiles.reduce((sum, tile) => sum + tile.points, 0);
+                    const scoreToAdd = revealedPoints;
                     return (
                       <div key={team} className="rounded-[1.4rem] bg-background/80 p-4">
                         <div className="mb-3 flex items-center justify-between gap-3">

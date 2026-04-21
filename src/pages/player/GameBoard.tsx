@@ -51,6 +51,8 @@ export default function GameBoard() {
       return { rank, revealed };
     },
   );
+  const tileColumns = tiles.length > 3 ? 2 : 1;
+  const tileRows = Math.max(1, Math.ceil(tiles.length / tileColumns));
 
   if (playState === 'FINISHED' || winner) {
     return (
@@ -101,11 +103,11 @@ export default function GameBoard() {
 
   return (
     <FullScreenBoard gameCode={gameCode}>
-      <div className="mx-auto max-w-384 px-4 pb-12 pt-6 sm:px-6 lg:px-8">
-        <div className="grid gap-5 xl:grid-cols-[minmax(15rem,18rem)_minmax(0,1fr)_minmax(15rem,18rem)]">
-          <TeamScoreCard teamName={teamAName} score={teamAScore} className="min-h-48 text-center" />
+      <div className="mx-auto flex h-full w-full max-w-384 flex-1 flex-col px-3 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4 lg:px-6">
+        <div className="grid shrink-0 grid-cols-2 gap-3 lg:grid-cols-[minmax(10rem,12rem)_minmax(0,1fr)_minmax(10rem,12rem)]">
+          <TeamScoreCard teamName={teamAName} score={teamAScore} className="order-2 min-h-[5.75rem] text-center lg:order-none lg:min-h-[8.5rem]" />
 
-          <div className="marquee-frame theme-panel-strong rounded-[2.4rem] px-6 py-6 text-center shadow-glow">
+          <div className="marquee-frame theme-panel-strong order-1 col-span-2 rounded-[1.9rem] px-4 py-4 text-center shadow-glow sm:px-5 sm:py-5 lg:order-none lg:col-span-1 lg:rounded-[2.25rem]">
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Badge variant="secondary">Round {currentQuestion.roundNumber}</Badge>
               <span className="flex items-center gap-1 rounded-full bg-destructive px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-white">
@@ -113,18 +115,25 @@ export default function GameBoard() {
                 Live Board
               </span>
             </div>
-            <h1 className="mx-auto mt-4 max-w-4xl text-3xl font-black leading-tight text-foreground sm:text-4xl lg:text-5xl">
+            <h1 className="mx-auto mt-3 max-w-4xl text-2xl font-black leading-tight text-foreground sm:text-3xl lg:text-[2.65rem]">
               {currentQuestion.text}
             </h1>
-            <div className="mt-5 flex justify-center">
+            <div className="mt-4 flex justify-center">
               <StrikeMarks count={currentStrikes} />
             </div>
           </div>
 
-          <TeamScoreCard teamName={teamBName} score={teamBScore} className="min-h-48 text-center" />
+          <TeamScoreCard teamName={teamBName} score={teamBScore} className="order-3 min-h-[5.75rem] text-center lg:order-none lg:min-h-[8.5rem]" />
         </div>
 
-        <div className={`mt-6 grid gap-4 ${tiles.length > 4 ? 'xl:grid-cols-2' : 'grid-cols-1'}`}>
+        <div className="mt-4 min-h-0 flex-1">
+          <div
+            className="grid h-full min-h-0 gap-3"
+            style={{
+              gridTemplateColumns: `repeat(${tileColumns}, minmax(0, 1fr))`,
+              gridTemplateRows: `repeat(${tileRows}, minmax(0, 1fr))`,
+            }}
+          >
           {tiles.map(({ rank, revealed }) => (
             <AnswerTile
               key={rank}
@@ -132,8 +141,10 @@ export default function GameBoard() {
               revealed={!!revealed}
               optionText={revealed?.optionText}
               points={revealed?.points}
+              className="min-h-[4.75rem] sm:min-h-[5.5rem]"
             />
           ))}
+          </div>
         </div>
       </div>
     </FullScreenBoard>
@@ -148,8 +159,8 @@ function FullScreenBoard({
   gameCode: string;
 }) {
   return (
-    <div className="stage-grid spotlight-wash min-h-screen bg-background text-foreground">
-      <div className="sticky top-0 z-10 border-b border-border/40 bg-background/88 backdrop-blur-sm">
+    <div className="stage-grid spotlight-wash flex h-[100svh] flex-col overflow-hidden bg-background text-foreground">
+      <div className="shrink-0 border-b border-border/40 bg-background/88 backdrop-blur-sm">
         <div className="mx-auto flex max-w-384 items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 text-sm font-black text-primary">
             <Tv2 className="size-4" />
@@ -161,7 +172,7 @@ function FullScreenBoard({
         </div>
       </div>
 
-      {children}
+      <div className="min-h-0 flex-1">{children}</div>
     </div>
   );
 }

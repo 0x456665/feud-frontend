@@ -252,10 +252,10 @@ export default function GameLobby() {
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex min-h-[calc(100vh-56px)] overflow-x-hidden bg-background">
+    <div className="flex h-[calc(100svh-var(--app-header-height))] overflow-hidden bg-background">
       <AdminSidebar gameCode={gameCode} active="survey" />
 
-      <div className="stage-grid spotlight-wash relative flex-1 overflow-y-auto">
+      <div className="stage-grid spotlight-wash relative flex-1 overflow-y-auto overscroll-contain">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.45),transparent_40%)]" />
         <div className="relative mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
           <section className="mb-8 grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">

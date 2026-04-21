@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { Navbar } from '@/components/layout/Navbar';
 
@@ -36,38 +36,44 @@ import { AdminGuard } from '@/components/layout/AdminGuard';
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="flex min-h-screen flex-col bg-background">
-        {/* Sonner toast notifications */}
-        <Toaster position="top-right" richColors theme='light' closeButton />
-
-        {/* Top navigation — hidden on full-screen game board */}
-        <Navbar />
-
-        <Routes>
-          {/* Public */}
-          <Route path="/" element={<Home />} />
-          <Route path="/rules" element={<Rules />} />
-
-          {/* Player flow */}
-          <Route path="/join" element={<JoinGame />} />
-          <Route path="/game/:gameCode" element={<PlayerGame />} />
-          <Route path="/game/:gameCode/vote" element={<VotingPage />} />
-          <Route path="/game/:gameCode/board" element={<GameBoard />} />
-          <Route path="/game/:gameCode/end" element={<GameEnd />} />
-
-          {/* Admin flow */}
-          <Route path="/admin/create" element={<CreateGame />} />
-          <Route path="/admin/access" element={<AdminAccess />} />
-          <Route path="/admin/game/:gameCode/created" element={<AdminGuard><GameCreated /></AdminGuard>} />
-          <Route path="/admin/game/:gameCode" element={<AdminGuard><GameLobby /></AdminGuard>} />
-          <Route path="/admin/game/:gameCode/survey-edit" element={<AdminGuard><SurveyEditor /></AdminGuard>} />
-          <Route path="/admin/game/:gameCode/live" element={<AdminGuard><LiveGame /></AdminGuard>} />
-
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </div>
+      <AppShell />
     </BrowserRouter>
+  );
+}
+
+function AppShell() {
+  const location = useLocation();
+  const showNavbar = ![
+    /^\/game\/[^/]+\/board$/,
+    /^\/admin\/game\/[^/]+\/live$/,
+  ].some((pattern) => pattern.test(location.pathname));
+
+  return (
+    <div className="flex min-h-screen flex-col bg-background">
+      <Toaster position="top-right" richColors theme="light" closeButton />
+
+      {showNavbar ? <Navbar /> : null}
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/rules" element={<Rules />} />
+
+        <Route path="/join" element={<JoinGame />} />
+        <Route path="/game/:gameCode" element={<PlayerGame />} />
+        <Route path="/game/:gameCode/vote" element={<VotingPage />} />
+        <Route path="/game/:gameCode/board" element={<GameBoard />} />
+        <Route path="/game/:gameCode/end" element={<GameEnd />} />
+
+        <Route path="/admin/create" element={<CreateGame />} />
+        <Route path="/admin/access" element={<AdminAccess />} />
+        <Route path="/admin/game/:gameCode/created" element={<AdminGuard><GameCreated /></AdminGuard>} />
+        <Route path="/admin/game/:gameCode" element={<AdminGuard><GameLobby /></AdminGuard>} />
+        <Route path="/admin/game/:gameCode/survey-edit" element={<AdminGuard><SurveyEditor /></AdminGuard>} />
+        <Route path="/admin/game/:gameCode/live" element={<AdminGuard><LiveGame /></AdminGuard>} />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </div>
   );
 }
 

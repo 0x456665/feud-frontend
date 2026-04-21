@@ -40,7 +40,7 @@ export function AdminSidebar({
   ];
 
   return (
-    <aside className="hidden h-[calc(100vh-3.5rem)] sticky top-14 w-52 shrink-0 flex-col bg-card lg:flex">
+    <aside className="hidden h-full min-h-0 w-52 shrink-0 flex-col border-r border-border/30 bg-card lg:flex">
       {/* Header */}
       <div className="px-5 pt-7 pb-6">
         {variant === 'live' ? (

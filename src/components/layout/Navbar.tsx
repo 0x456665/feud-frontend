@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetDescription,
   SheetHeader,
@@ -113,27 +114,35 @@ export function Navbar() {
                 {links.map((link) => {
                   const active = isActive(link);
                   return (
-                    <Link
+                    <SheetClose
                       key={`${link.to}:${link.label}:mobile`}
-                      to={link.to}
-                      className={cn(
-                        'rounded-2xl px-4 py-3 text-sm font-semibold transition-colors',
-                        active
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-muted/50 text-foreground hover:bg-primary/10 hover:text-primary',
-                      )}
+                      render={
+                        <Link
+                          to={link.to}
+                          className={cn(
+                            'rounded-2xl px-4 py-3 text-sm font-semibold transition-colors',
+                            active
+                              ? 'bg-primary text-primary-foreground'
+                              : 'bg-muted/50 text-foreground hover:bg-primary/10 hover:text-primary',
+                          )}
+                        />
+                      }
                     >
                       {link.label}
-                    </Link>
+                    </SheetClose>
                   );
                 })}
 
-                <Link
-                  to="/rules"
-                  className="mt-2 rounded-2xl border border-border/50 px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                <SheetClose
+                  render={
+                    <Link
+                      to="/rules"
+                      className="mt-2 rounded-2xl border border-border/50 px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                    />
+                  }
                 >
                   Rules
-                </Link>
+                </SheetClose>
               </div>
             </SheetContent>
           </Sheet>

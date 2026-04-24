@@ -73,3 +73,29 @@ export function preloadSounds(): void {
     }
   });
 }
+
+/**
+ * Unlocks the browser's autoplay policy for this page by playing a silent
+ * audio element in response to a user gesture.  Must be called inside a
+ * user-interaction event handler (click, keydown, touchstart, etc.).
+ *
+ * After this runs once, subsequent `playSound` calls work without a gesture.
+ */
+export function unlockAudio(): void {
+  // Play each cached (or newly created) audio element silently for a single
+  // frame to satisfy the browser's "user activated" requirement.
+  Object.entries(SOUND_MAP).forEach(([name, path]) => {
+    if (!audioCache[name]) {
+      const audio = new Audio(path);
+      audio.preload = 'auto';
+      audioCache[name] = audio;
+    }
+    const audio = audioCache[name];
+    audio.muted = true;
+    audio.play().then(() => {
+      audio.pause();
+      audio.muted = false;
+      audio.currentTime = 0;
+    }).catch(() => { /* already unlocked or file missing */ });
+  });
+}

@@ -123,7 +123,20 @@ export default function LiveGame() {
           return;
         }
 
-        await startGame(gameCode).unwrap();
+        // Don't use .unwrap() here — if the game is already IN_PROGRESS (stale
+        // cache after navigating from GameLobby), we should continue to nextQuestion
+        // rather than showing a misleading error.
+        const startResult = await startGame(gameCode);
+        if ('error' in startResult && startResult.error) {
+          const errMsg =
+            (startResult.error as { data?: { message?: string } })?.data?.message ?? '';
+          // Only abort for genuine errors — "already IN_PROGRESS" means the
+          // game was started in GameLobby and the local cache is just stale.
+          if (!errMsg.includes('IN_PROGRESS')) {
+            toast.error(errMsg || 'Could not start game.');
+            return;
+          }
+        }
       }
 
       await nextQuestion(gameCode).unwrap();

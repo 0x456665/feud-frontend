@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { AdminSidebar } from '@/components/layout/AdminSidebar';
+import { useGameEvents } from '@/hooks/useGameEvents';
 import {
   useDuplicateGameMutation,
   useGetGameQuery,
@@ -51,11 +52,11 @@ export default function GameLobby() {
 
   // ── RTK Query ──────────────────────────────────────────────────────────
   const { data: game, isLoading: gameLoading } = useGetGameQuery(gameCode);
-  const { data: stats, refetch: refetchStats } = useGetSurveyStatsQuery(gameCode, {
+  const { data: stats } = useGetSurveyStatsQuery(gameCode, {
     // Only fetch stats when voting is closed (data is ready then)
     skip: game?.voting_state !== 'CLOSED',
   });
-  const { data: surveyVoterStats } = useGetSurveyVoterCountQuery(gameCode, {
+  const { data: surveyVoterStats, refetch: refetchSurveyVoterCount } = useGetSurveyVoterCountQuery(gameCode, {
     pollingInterval: 10_000,
     skip: !gameCode,
   });
@@ -110,23 +111,26 @@ export default function GameLobby() {
     });
   }
 
-  // ── Vote update handler (called from SSE hook in parent) ───────────────
-  // Currently the lobby just refresh the stats panel when votes come in.
-  // The parent page can pass this down if needed.
+  // ── Vote update handler ────────────────────────────────────────────────
+  // Immediately refreshes both the lobby count and the survey voter count
+  // whenever a vote_update SSE event arrives.
   const handleVoteUpdate = useCallback(() => {
     refetchCount();
-  }, [refetchCount]);
-  void handleVoteUpdate; // suppress unused warning — used by parent
+    void refetchSurveyVoterCount();
+  }, [refetchCount, refetchSurveyVoterCount]);
+
+  // ── SSE events ────────────────────────────────────────────────────────
+  useGameEvents(gameCode, () => { void refetchSurveyVoterCount(); }, handleVoteUpdate);
 
   // ── Voting state change ────────────────────────────────────────────────
 
   async function changeVotingState(state: VotingState) {
     try {
       await setVotingState({ gameCode, voting_state: state }).unwrap();
-      if (state === 'CLOSED') {
-        // Stats are now ready — fetch them
-        refetchStats();
-      }
+      // No manual refetchStats() needed: setVotingState invalidates the SurveyStats
+      // tag, and RTK Query auto-fetches getSurveyStats once game.voting_state
+      // updates to 'CLOSED' (making skip=false). Calling refetch() on a skipped
+      // query throws synchronously in RTK Query v2 and would show a false error toast.
       toast.success(`Voting ${state.toLowerCase()}.`);
     } catch (err: unknown) {
       toast.error(getErrorMessage(err, 'Failed to update voting state.'));
@@ -180,7 +184,7 @@ export default function GameLobby() {
       window.localStorage.setItem('feud_admin_session', JSON.stringify(sessionPayload));
       toast.success(`Created duplicate game ${result.game_code}.`);
       setDuplicateDialogOpen(false);
-      navigate(`/admin/game/${result.game_code}/created`, { replace: true });
+      navigate(`/admin/game/${result.game_code}/created`);
     } catch (err: unknown) {
       toast.error(getErrorMessage(err, 'Failed to duplicate game.'));
     }

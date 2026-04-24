@@ -11,6 +11,7 @@ import { TeamScoreCard } from "@/components/game/TeamScoreCard"
 import { useGameEvents } from "@/hooks/useGameEvents"
 import { useGetBoardQuery } from "@/store/api/playerApi"
 import { applyBoardSnapshot } from "@/store/slices/gameStateSlice"
+import { unlockAudio } from "@/lib/sound"
 import type { RootState, AppDispatch } from "@/store"
 
 export default function GameBoard() {
@@ -31,6 +32,19 @@ export default function GameBoard() {
   } = useSelector((s: RootState) => s.gameState)
 
   const { data: board, refetch: refetchBoard } = useGetBoardQuery(gameCode)
+
+  // Unlock browser autoplay policy on first user interaction so SSE sounds work
+  useEffect(() => {
+    const unlock = () => { unlockAudio(); }
+    window.addEventListener('click', unlock, { once: true })
+    window.addEventListener('keydown', unlock, { once: true })
+    window.addEventListener('touchstart', unlock, { once: true })
+    return () => {
+      window.removeEventListener('click', unlock)
+      window.removeEventListener('keydown', unlock)
+      window.removeEventListener('touchstart', unlock)
+    }
+  }, [])
 
   useEffect(() => {
     if (!board) return
@@ -120,7 +134,7 @@ export default function GameBoard() {
 
   return (
     <FullScreenBoard gameCode={gameCode}>
-      <div className="mx-auto grid h-full w-full max-w-384 grid-rows-[32%_minmax(0,1fr)] gap-[clamp(0.7rem,1.5vh,1rem)] px-[2.5vw] py-[2.2vh] sm:px-[2vw] lg:px-[1.6vw]">
+      <div className="mx-auto grid h-full w-full max-w-384 grid-rows-[auto_minmax(0,1fr)] gap-[clamp(0.7rem,1.5vh,1rem)] px-[2.5vw] py-[2.2vh] sm:px-[2vw] lg:grid-rows-[32%_minmax(0,1fr)] lg:px-[1.6vw]">
         <div className="grid min-h-0 grid-cols-2 items-stretch gap-[clamp(0.7rem,1vw,1rem)] lg:grid-cols-[21%_58%_21%]">
           <TeamScoreCard
             teamName={teamAName}
